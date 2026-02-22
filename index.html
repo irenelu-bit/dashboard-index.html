@@ -1,0 +1,1605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUNÉ — FY26 Financial Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nav-bg: #0d1117;
+  --nav-border: rgba(255,255,255,0.06);
+  --nav-text: rgba(255,255,255,0.5);
+  --nav-active: #f0c674;
+  --nav-active-bg: rgba(240,198,116,0.08);
+  --nav-active-border: rgba(240,198,116,0.15);
+  --gold: #d4a853;
+  --gold-light: #f0c674;
+  --gold-dim: rgba(212,168,83,0.08);
+  --gold-border: rgba(212,168,83,0.2);
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --surface2: #f5f5f2;
+  --border: #e8e6e1;
+  --border-dark: #d4d1c9;
+  --text: #1a1816;
+  --text-mid: #5a5550;
+  --text-dim: #9a948c;
+  --green: #1e7a4d;
+  --green-bg: rgba(30,122,77,0.08);
+  --red: #b83232;
+  --red-bg: rgba(184,50,50,0.06);
+  --blue: #2563eb;
+  --blue-bg: rgba(37,99,235,0.06);
+  --purple: #7c3aed;
+  --purple-bg: rgba(124,58,237,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: 'Instrument Sans', -apple-system, sans-serif; 
+  font-size: 13px; 
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: var(--nav-bg);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+}
+.logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--nav-border);
+}
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold-light);
+}
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.nav-section { padding: 14px 10px; flex: 1; overflow-y: auto; }
+.nav-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  padding: 0 10px;
+  margin: 16px 0 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--nav-text);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); }
+.nav-item.active { 
+  background: var(--nav-active-bg); 
+  color: var(--nav-active); 
+  border-color: var(--nav-active-border);
+}
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--nav-border);
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+}
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Main area */
+.main {
+  margin-left: 200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.topbar-sub { font-size: 11px; color: var(--text-dim); }
+.sep { width: 1px; height: 20px; background: var(--border); }
+
+/* Tabs */
+.tabs { display: flex; gap: 3px; }
+.tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-mid);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.tab.active { background: var(--nav-bg); color: var(--gold-light); }
+.tab:hover:not(.active) { background: var(--surface2); }
+
+/* Page container */
+.page { display: none; flex: 1; overflow: auto; padding: 24px; }
+.page.active { display: block; }
+
+/* Dashboard header */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.dash-title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.dash-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.btn-group { display: flex; gap: 8px; }
+.btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-mid);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--gold); color: var(--text); }
+.btn.primary { background: var(--nav-bg); color: var(--gold-light); border-color: var(--nav-bg); }
+.btn.primary:hover { opacity: 0.9; }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.kpi-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.kpi-card.highlight { border-color: var(--gold); background: var(--gold-dim); }
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.kpi-margin {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.kpi-delta {
+  font-size: 10px;
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kpi-delta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.delta-yoy { background: var(--blue-bg); color: var(--blue); }
+.delta-fc { background: var(--gold-dim); color: #8a6d2f; }
+.delta-bud { background: var(--purple-bg); color: var(--purple); }
+.pos { color: var(--green) !important; }
+.neg { color: var(--red) !important; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.card-title { font-size: 14px; font-weight: 600; }
+.card-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.card-actions { display: flex; gap: 8px; align-items: center; }
+.legend { display: flex; gap: 16px; font-size: 10px; color: var(--text-dim); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* P&L Table */
+.pl-table-wrap { overflow-x: auto; max-height: 70vh; }
+.pl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.pl-table th {
+  background: var(--surface2);
+  padding: 12px 10px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.pl-table th:first-child { text-align: left; min-width: 180px; position: sticky; left: 0; background: var(--surface2); z-index: 11; }
+.pl-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  text-align: right;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.pl-table td:first-child { 
+  text-align: left; 
+  color: var(--text); 
+  position: sticky; 
+  left: 0; 
+  background: var(--surface);
+  z-index: 5;
+}
+.pl-table tr:hover td { background: var(--bg); }
+.pl-table tr:hover td:first-child { background: var(--bg); }
+
+/* Row types */
+.row-section td {
+  background: var(--surface2) !important;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim) !important;
+  padding: 14px 10px 8px !important;
+  border-bottom: none !important;
+}
+.row-subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.015) !important;
+}
+.row-major td {
+  font-weight: 600;
+  background: var(--gold-dim) !important;
+  border-top: 2px solid var(--gold-border);
+}
+.row-grand td {
+  font-weight: 700;
+  background: var(--nav-bg) !important;
+  color: var(--gold-light) !important;
+  border-top: 2px solid var(--nav-bg);
+}
+.row-indent td:first-child { padding-left: 24px; }
+.row-indent2 td:first-child { padding-left: 36px; }
+.row-clickable { cursor: pointer; }
+.row-clickable:hover td { background: var(--blue-bg) !important; }
+
+/* Collapsible */
+.collapse-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.collapse-toggle::before {
+  content: '▼';
+  display: inline-block;
+  width: 14px;
+  font-size: 8px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+}
+.collapse-toggle.collapsed::before { transform: rotate(-90deg); }
+.row-collapsed { display: none; }
+
+/* Number formatting */
+.num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+}
+.delta {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 45px;
+  text-align: center;
+}
+
+/* R&O Card */
+.ro-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.ro-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.ro-card.risk { border-left: 4px solid var(--red); }
+.ro-card.opp { border-left: 4px solid var(--green); }
+.ro-card.result { border-left: 4px solid var(--blue); }
+.ro-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 12px;
+}
+.ro-card.risk .ro-title { color: var(--red); }
+.ro-card.opp .ro-title { color: var(--green); }
+.ro-card.result .ro-title { color: var(--blue); }
+.ro-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 28px;
+  font-weight: 400;
+  margin-bottom: 8px;
+}
+.ro-detail {
+  font-size: 11px;
+  color: var(--text-dim);
+  line-height: 1.5;
+}
+.ro-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ro-item:last-child { border-bottom: none; }
+
+/* GL Page */
+.gl-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-dim); }
+.filter-select {
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 12px;
+  font-family: inherit;
+  background: var(--surface);
+  min-width: 140px;
+  cursor: pointer;
+}
+.filter-select:focus { outline: none; border-color: var(--gold); }
+
+/* Drill-down modal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-overlay.active { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: 16px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 85vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.modal-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.modal-title { font-size: 18px; font-weight: 600; }
+.modal-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: var(--surface2);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--text-mid);
+}
+.modal-close:hover { background: var(--border); }
+.modal-body { flex: 1; overflow: auto; padding: 24px; }
+
+/* Drag & Drop variance */
+.variance-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+.variance-box {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 200px;
+}
+.variance-box.positive { border-color: var(--green); background: var(--green-bg); }
+.variance-box.negative { border-color: var(--red); background: var(--red-bg); }
+.variance-box-title {
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+}
+.variance-item {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 8px;
+  cursor: grab;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.15s;
+}
+.variance-item:hover { border-color: var(--gold); }
+.variance-item.dragging { opacity: 0.5; }
+.variance-item-name { font-weight: 500; }
+.variance-item-value { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+/* Monthly view */
+.month-header { 
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  transform: rotate(180deg);
+  white-space: nowrap;
+}
+
+/* Responsive */
+@media (max-width: 1400px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+  .ro-grid { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 1000px) {
+  .sidebar { width: 60px; }
+  .sidebar .logo-text, .sidebar .logo-sub, .sidebar .nav-label, .sidebar .nav-item span, .sidebar-footer { display: none; }
+  .main { margin-left: 60px; }
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .ro-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-text">LUNÉ</div>
+    <div class="logo-sub">FY26 Analytics</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Dashboard</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">📊</span>
+      <span>P&L Overview</span>
+    </div>
+    <div class="nav-item" data-page="monthly">
+      <span class="nav-icon">📅</span>
+      <span>Monthly View</span>
+    </div>
+    <div class="nav-item" data-page="ro">
+      <span class="nav-icon">⚖️</span>
+      <span>Risks & Opps</span>
+    </div>
+    <div class="nav-label">Analysis</div>
+    <div class="nav-item" data-page="gl">
+      <span class="nav-icon">📋</span>
+      <span>GL Analyzer</span>
+    </div>
+    <div class="nav-item" data-page="physical">
+      <span class="nav-icon">💿</span>
+      <span>Physical</span>
+    </div>
+    <div class="nav-item" data-page="digital">
+      <span class="nav-icon">🎵</span>
+      <span>Digital</span>
+    </div>
+    <div class="nav-item" data-page="newbiz">
+      <span class="nav-icon">🎤</span>
+      <span>New Business</span>
+    </div>
+    <div class="nav-item" data-page="licensing">
+      <span class="nav-icon">📜</span>
+      <span>Licensing</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>Data synced
+  </div>
+</nav>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title">FY26 P&L Dashboard</div>
+      <div class="topbar-sub">Japan Warner Music · JPY '000</div>
+    </div>
+    <div class="sep"></div>
+    <div class="tabs" id="viewTabs">
+      <button class="tab active" data-view="full">Full Year</button>
+      <button class="tab" data-view="ytd">YTD (Oct-Jan)</button>
+      <button class="tab" data-view="q3">Q3</button>
+      <button class="tab" data-view="q4">Q4</button>
+    </div>
+    <div class="sep"></div>
+    <div class="tabs" id="scenarioTabs">
+      <button class="tab active" data-scenario="febpv">Feb PV</button>
+      <button class="tab" data-scenario="janpv">Jan PV</button>
+      <button class="tab" data-scenario="budget">Budget</button>
+    </div>
+  </header>
+
+  <!-- Dashboard Page -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">FY26 Feb PV vs. Comparatives</h1>
+        <p class="dash-subtitle">Full Year · Actuals (Oct-Jan) + Forecast (Feb-Sep)</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn" onclick="exportData()">↓ Export CSV</button>
+        <button class="btn primary" onclick="document.getElementById('uploadInput').click()">↑ Upload Data</button>
+        <input type="file" id="uploadInput" accept=".xlsx" multiple style="display:none" onchange="handleUpload(this.files)">
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Profit & Loss Statement</div>
+          <div class="card-subtitle">Click on Physical, New Business, or Licensing to drill down</div>
+        </div>
+        <div class="card-actions">
+          <div class="legend">
+            <span><span class="legend-dot" style="background:var(--blue)"></span>YoY</span>
+            <span><span class="legend-dot" style="background:var(--gold)"></span>vs Jan PV</span>
+            <span><span class="legend-dot" style="background:var(--purple)"></span>vs Budget</span>
+          </div>
+        </div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table" id="plTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly View Page -->
+  <div class="page" id="page-monthly">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Monthly P&L View</h1>
+        <p class="dash-subtitle">FY26 Monthly breakdown · Oct 2025 - Sep 2026</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Monthly Performance</div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table" id="monthlyTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Risks & Opportunities Page -->
+  <div class="page" id="page-ro">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Risks & Opportunities Analysis</h1>
+        <p class="dash-subtitle">Impact on Feb PV results vs. Budget</p>
+      </div>
+    </div>
+    
+    <div class="ro-grid">
+      <div class="ro-card risk">
+        <div class="ro-title">Total Risks</div>
+        <div class="ro-value neg">¥15.3B</div>
+        <div class="ro-detail" id="riskDetails"></div>
+      </div>
+      <div class="ro-card opp">
+        <div class="ro-title">Total Opportunities</div>
+        <div class="ro-value pos">¥4.7B</div>
+        <div class="ro-detail" id="oppDetails"></div>
+      </div>
+      <div class="ro-card result">
+        <div class="ro-title">Net Impact on OIBDA</div>
+        <div class="ro-value">¥5.0B</div>
+        <div class="ro-detail">
+          <div class="ro-item"><span>Feb PV OIBDA</span><span>¥7,297M</span></div>
+          <div class="ro-item"><span>+ Opportunities</span><span class="pos">+¥1,025M</span></div>
+          <div class="ro-item"><span>- Risks</span><span class="neg">-¥3,291M</span></div>
+          <div class="ro-item" style="font-weight:600"><span>Adj. OIBDA</span><span>¥5,031M</span></div>
+          <div class="ro-item"><span>vs Budget</span><span class="neg">-30.2%</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">R&O Detail by Channel</div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table" id="roTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GL Analyzer Page -->
+  <div class="page" id="page-gl">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">GL Data Analyzer</h1>
+        <p class="dash-subtitle">Analyze general ledger transactions</p>
+      </div>
+    </div>
+    
+    <div class="gl-filters">
+      <div class="filter-group">
+        <label class="filter-label">Period</label>
+        <select class="filter-select" id="glPeriod">
+          <option value="all">All Periods</option>
+          <option value="OCT-25">Oct 2025</option>
+          <option value="NOV-25">Nov 2025</option>
+          <option value="DEC-25">Dec 2025</option>
+          <option value="JAN-26">Jan 2026</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Department</label>
+        <select class="filter-select" id="glDept">
+          <option value="all">All Departments</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Account Type</label>
+        <select class="filter-select" id="glAcctType">
+          <option value="all">All Types</option>
+          <option value="revenue">Revenue (300-399)</option>
+          <option value="cos">Cost of Sales (400-499)</option>
+          <option value="expense">Expenses (500-899)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Search</label>
+        <input type="text" class="filter-select" id="glSearch" placeholder="Account or description...">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">GL Transactions</div>
+        <div class="card-subtitle" id="glCount">Loading...</div>
+      </div>
+      <div class="pl-table-wrap" style="max-height: 60vh;">
+        <table class="pl-table" id="glTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Drill-down Pages -->
+  <div class="page" id="page-physical">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Physical Revenue Analysis</h1>
+        <p class="dash-subtitle">Variance analysis and breakdown</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="physicalContent"></div>
+  </div>
+
+  <div class="page" id="page-digital">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Digital Revenue Analysis</h1>
+        <p class="dash-subtitle">Streaming and download breakdown</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="digitalContent"></div>
+  </div>
+
+  <div class="page" id="page-newbiz">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">New Business Analysis</h1>
+        <p class="dash-subtitle">Tour, Merchandise, Artist Management</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="newbizContent"></div>
+  </div>
+
+  <div class="page" id="page-licensing">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Licensing Revenue Analysis</h1>
+        <p class="dash-subtitle">Sync, Broadcast, Brand licensing</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="licensingContent"></div>
+  </div>
+</main>
+
+<!-- Drill-down Modal -->
+<div class="modal-overlay" id="drillModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="drillTitle">Variance Analysis</div>
+      <button class="modal-close" onclick="closeDrill()">×</button>
+    </div>
+    <div class="modal-body" id="drillBody"></div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DATA = {
+  months: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+  
+  febPV: {
+    monthly: {
+      totalRevenue: [2197064, 2358539, 2561983, 1828233, 2060463, 2359347, 7170792, 4547952, 4686872, 4850001, 3910793, 6350921],
+      physical: [608673, 381082, 464524, 471875, 625724, 360940, 716662, 1594130, 1620140, 1869817, 787365, 2700692],
+      digital: [1125923, 1485829, 990748, 1111887, 1112988, 1162861, 1193242, 1247198, 1407103, 1413484, 1426228, 1426338],
+      newBusiness: [277648, 161796, 426711, 82459, 166372, 113680, 5086708, 1445137, 1369806, 1332686, 1477248, 1579582],
+      licensing: [184821, 329832, 679999, 162012, 155378, 721866, 174179, 261487, 289823, 234015, 219952, 644309],
+      grossMargin: [1027834, 1092014, 1182459, 746570, 1066577, 1128599, 1350842, 1477752, 1567353, 1648599, 1329911, 2332505],
+      variableMktg: [83903, 103059, 71448, 131828, 220049, 159985, 201824, 260834, 171425, 242866, 189406, 190372],
+      arCosts: [128228, -19701, 86054, 209006, 96885, 181164, 200936, 250350, 297368, 426362, 421145, 385395],
+      overhead: [275796, 323594, 394008, 277980, 314075, 365829, 363730, 318317, 335402, 319756, 313802, 361440],
+      oibda: [530586, 681253, 638262, 158385, 435568, 421621, 584351, 648251, 763157, 659616, 405558, 1370487]
+    },
+    fullYear: {
+      totalRevenue: 44882960,
+      physical: 12201625,
+      digital: 15103828,
+      digitalStreaming: 14394369,
+      newBusiness: 13519833,
+      tourRevenue: 8472875,
+      artistMgmt: 21971,
+      merchandise: 2964834,
+      otherNewBiz: 2060153,
+      licensing: 4057675,
+      brandRevenue: 1387000,
+      syncRevenue: 73187,
+      broadcastFee: 920354,
+      murRevenue: 623196,
+      otherLicensing: 1053938,
+      grossMargin: 15951014,
+      gmPhysical: 4040785,
+      gmDigital: 9249449,
+      gmNewBiz: 650343,
+      gmLicensing: 2010437,
+      variableMktg: 2027000,
+      arCosts: 2663191,
+      contributionMargin: 11260823,
+      overhead: 3963728,
+      otherIncome: 0,
+      oibda: 7297095
+    }
+  },
+  
+  janPV: {
+    fullYear: {
+      totalRevenue: 44882960,
+      physical: 12201624,
+      digital: 15103828,
+      newBusiness: 13519833,
+      licensing: 4057675,
+      grossMargin: 15951014,
+      variableMktg: 1974239,
+      arCosts: 2715953,
+      contributionMargin: 11260823,
+      overhead: 3963728,
+      oibda: 7297095
+    }
+  },
+  
+  budget: {
+    fullYear: {
+      totalRevenue: 44720245,
+      physical: 12201624,
+      digital: 14941113,
+      newBusiness: 14019833,
+      licensing: 3557675,
+      grossMargin: 15861785,
+      variableMktg: 1974239,
+      arCosts: 2715953,
+      contributionMargin: 11171594,
+      overhead: 3963728,
+      oibda: 7207866
+    }
+  },
+  
+  fy25: {
+    fullYear: {
+      totalRevenue: 40413631,
+      physical: 9228542,
+      digital: 13602313,
+      newBusiness: 14106646,
+      licensing: 3476130,
+      grossMargin: 13675226,
+      variableMktg: 1539839,
+      arCosts: 1560173,
+      contributionMargin: 10575213,
+      overhead: 4243827,
+      otherIncome: -199287,
+      oibda: 6132099
+    }
+  },
+  
+  ro: {
+    risks: {
+      physical: { fy: 6250137, q3: 1950217, q4: 4299920, details: 'Physical sales decline risk' },
+      digital: { fy: 1200250, q3: 473459, q4: 545497, details: 'Streaming growth slowdown' },
+      newBusiness: { fy: 7356098, q3: 3678049, q4: 3678049, details: 'Tour revenue uncertainty' },
+      licensing: { fy: 335996, q3: 167998, q4: 167998, details: 'Sync deal timing' },
+      sga: { fy: 160000, q3: 0, q4: 160000, details: 'Overhead increase' }
+    },
+    opportunities: {
+      physical: { fy: 2606543, q3: 644702, q4: 1917371, details: 'Number_i, TWICE best AL, Madonna, GPP' },
+      digital: { fy: 0, q3: 0, q4: 0, details: '' },
+      newBusiness: { fy: 1758227, q3: 652727, q4: 1105500, details: 'TWICE live ticket sales' },
+      licensing: { fy: 310000, q3: 0, q4: 310000, details: 'Brand licensing deals' }
+    },
+    totals: {
+      totalRisks: 15302480,
+      totalOpps: 4674770,
+      netImpact: -10627711,
+      adjOibda: 5030975
+    }
+  },
+  
+  glData: [] // Will be populated from upload
+};
+
+// P&L Structure with collapse functionality
+const PL_STRUCTURE = [
+  { type: 'section', label: 'REVENUE' },
+  { key: 'physical', label: 'Physical', clickable: true },
+  { key: 'digital', label: 'Digital', clickable: true },
+  { key: 'digitalStreaming', label: 'Digital Streaming', indent: 1, parent: 'digital' },
+  { key: 'newBusiness', label: 'New Business', collapsible: true, clickable: true },
+  { key: 'tourRevenue', label: '- Tour Revenue', indent: 1, parent: 'newBusiness' },
+  { key: 'artistMgmt', label: '- Artist Management', indent: 1, parent: 'newBusiness' },
+  { key: 'merchandise', label: '- Merchandise Revenue', indent: 1, parent: 'newBusiness' },
+  { key: 'otherNewBiz', label: '- Other New Business', indent: 1, parent: 'newBusiness' },
+  { key: 'licensing', label: 'Licensing', collapsible: true, clickable: true },
+  { key: 'brandRevenue', label: '- Brand Revenue', indent: 1, parent: 'licensing' },
+  { key: 'syncRevenue', label: '- Sync Revenue', indent: 1, parent: 'licensing' },
+  { key: 'broadcastFee', label: '- Broadcast Fee Revenue', indent: 1, parent: 'licensing' },
+  { key: 'murRevenue', label: '- MUR Revenue', indent: 1, parent: 'licensing' },
+  { key: 'otherLicensing', label: '- Other Licensing', indent: 1, parent: 'licensing' },
+  { type: 'subtotal', key: 'totalRevenue', label: 'Total Revenue' },
+  
+  { type: 'section', label: 'GROSS PROFIT' },
+  { key: 'gmPhysical', label: 'Physical GP', margin: 'physical' },
+  { key: 'gmDigital', label: 'Digital GP', margin: 'digital' },
+  { key: 'gmNewBiz', label: 'New Business GP', margin: 'newBusiness' },
+  { key: 'gmLicensing', label: 'Licensing GP', margin: 'licensing' },
+  { type: 'major', key: 'grossMargin', label: 'Total Gross Margin' },
+  
+  { type: 'section', label: 'DIRECT COSTS' },
+  { key: 'variableMktg', label: 'Variable Marketing', cost: true },
+  { key: 'arCosts', label: 'A&R Costs', cost: true },
+  { type: 'subtotal', key: 'contributionMargin', label: 'Contribution Margin' },
+  
+  { type: 'section', label: 'OVERHEAD' },
+  { key: 'overhead', label: 'Total Overhead', cost: true },
+  { key: 'otherIncome', label: 'Other Income / Expense' },
+  { type: 'grand', key: 'oibda', label: 'OIBDA' }
+];
+
+// Collapsed state
+const collapsed = { newBusiness: false, licensing: false };
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════════════════════════════════════
+
+function fmtNum(n, compact = true) {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  let str;
+  if (compact) {
+    if (abs >= 1e9) str = '¥' + (abs / 1e9).toFixed(2) + 'B';
+    else if (abs >= 1e6) str = '¥' + (abs / 1e6).toFixed(1) + 'M';
+    else if (abs >= 1e3) str = '¥' + (abs / 1e3).toFixed(0) + 'K';
+    else str = '¥' + abs.toFixed(0);
+  } else {
+    str = '¥' + abs.toLocaleString();
+  }
+  return n < 0 ? '(' + str + ')' : str;
+}
+
+function fmtPct(n, showSign = true) {
+  if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return '—';
+  const pct = (n * 100).toFixed(1) + '%';
+  if (showSign && n > 0) return '+' + pct;
+  return pct;
+}
+
+function calcVar(actual, compare) {
+  if (!compare || compare === 0) return null;
+  return (actual - compare) / Math.abs(compare);
+}
+
+function calcMargin(gp, rev) {
+  if (!rev || rev === 0) return null;
+  return gp / rev;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KPI CARDS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderKPIs() {
+  const d = DATA.febPV.fullYear;
+  const jan = DATA.janPV.fullYear;
+  const bud = DATA.budget.fullYear;
+  const fy25 = DATA.fy25.fullYear;
+  
+  const kpis = [
+    {
+      label: 'Total Revenue',
+      value: d.totalRevenue,
+      yoy: calcVar(d.totalRevenue, fy25.totalRevenue),
+      vsfc: calcVar(d.totalRevenue, jan.totalRevenue),
+      vsbud: calcVar(d.totalRevenue, bud.totalRevenue)
+    },
+    {
+      label: 'Gross Margin',
+      value: d.grossMargin,
+      yoy: calcVar(d.grossMargin, fy25.grossMargin),
+      vsfc: calcVar(d.grossMargin, jan.grossMargin),
+      vsbud: calcVar(d.grossMargin, bud.grossMargin),
+      pct: calcMargin(d.grossMargin, d.totalRevenue)
+    },
+    {
+      label: 'Contribution',
+      value: d.contributionMargin,
+      yoy: calcVar(d.contributionMargin, fy25.contributionMargin),
+      vsfc: calcVar(d.contributionMargin, jan.contributionMargin),
+      vsbud: calcVar(d.contributionMargin, bud.contributionMargin),
+      pct: calcMargin(d.contributionMargin, d.totalRevenue)
+    },
+    {
+      label: 'OIBDA',
+      value: d.oibda,
+      yoy: calcVar(d.oibda, fy25.oibda),
+      vsfc: calcVar(d.oibda, jan.oibda),
+      vsbud: calcVar(d.oibda, bud.oibda),
+      pct: calcMargin(d.oibda, d.totalRevenue)
+    },
+    {
+      label: 'Adj. OIBDA (incl. R&O)',
+      value: DATA.ro.totals.adjOibda,
+      yoy: calcVar(DATA.ro.totals.adjOibda, fy25.oibda),
+      vsfc: calcVar(DATA.ro.totals.adjOibda, d.oibda),
+      vsbud: calcVar(DATA.ro.totals.adjOibda, bud.oibda),
+      highlight: true
+    }
+  ];
+
+  let html = '';
+  kpis.forEach(k => {
+    const valClass = k.value < 0 ? 'neg' : '';
+    const yoyClass = k.yoy > 0 ? 'pos' : (k.yoy < 0 ? 'neg' : '');
+    const vsfcClass = k.vsfc > 0 ? 'pos' : (k.vsfc < 0 ? 'neg' : '');
+    const vsbudClass = k.vsbud > 0 ? 'pos' : (k.vsbud < 0 ? 'neg' : '');
+    
+    html += `<div class="kpi-card ${k.highlight ? 'highlight' : ''}" onclick="${k.label.includes('OIBDA') ? "showPage('ro')" : ''}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value ${valClass}">${fmtNum(k.value)}</div>
+      ${k.pct ? `<div class="kpi-margin">${fmtPct(k.pct, false)} margin</div>` : ''}
+      <div class="kpi-delta">
+        <span class="delta-yoy ${yoyClass}">YoY ${fmtPct(k.yoy)}</span>
+        <span class="delta-fc ${vsfcClass}">vs FC ${fmtPct(k.vsfc)}</span>
+        <span class="delta-bud ${vsbudClass}">vs Bud ${fmtPct(k.vsbud)}</span>
+      </div>
+    </div>`;
+  });
+  
+  document.getElementById('kpiGrid').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// P&L TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderPLTable() {
+  const feb = DATA.febPV.fullYear;
+  const jan = DATA.janPV.fullYear;
+  const bud = DATA.budget.fullYear;
+  const fy25 = DATA.fy25.fullYear;
+  
+  let thead = `<thead><tr>
+    <th>Account</th>
+    <th>Feb PV</th>
+    <th>Jan PV</th>
+    <th>vs Jan PV</th>
+    <th>Budget</th>
+    <th>vs Budget</th>
+    <th>FY25</th>
+    <th>YoY Δ</th>
+  </tr></thead>`;
+  
+  let tbody = '<tbody>';
+  
+  PL_STRUCTURE.forEach(row => {
+    if (row.type === 'section') {
+      tbody += `<tr class="row-section"><td colspan="8">${row.label}</td></tr>`;
+      return;
+    }
+    
+    const febVal = feb[row.key] || 0;
+    const janVal = jan[row.key] || 0;
+    const budVal = bud[row.key] || 0;
+    const fy25Val = fy25[row.key] || 0;
+    
+    const vsJanPct = calcVar(febVal, janVal);
+    const vsBudPct = calcVar(febVal, budVal);
+    const yoyPct = calcVar(febVal, fy25Val);
+    
+    const displayFeb = row.cost ? -Math.abs(febVal) : febVal;
+    const displayJan = row.cost ? -Math.abs(janVal) : janVal;
+    const displayBud = row.cost ? -Math.abs(budVal) : budVal;
+    const displayFy25 = row.cost ? -Math.abs(fy25Val) : fy25Val;
+    
+    let rowClass = '';
+    if (row.type === 'subtotal') rowClass = 'row-subtotal';
+    else if (row.type === 'major') rowClass = 'row-major';
+    else if (row.type === 'grand') rowClass = 'row-grand';
+    else if (row.indent === 1) rowClass = 'row-indent';
+    else if (row.indent === 2) rowClass = 'row-indent2';
+    
+    if (row.clickable) rowClass += ' row-clickable';
+    if (row.parent && collapsed[row.parent]) rowClass += ' row-collapsed';
+    
+    const vsJanColor = row.cost ? (febVal < janVal ? 'pos' : febVal > janVal ? 'neg' : '') : (febVal > janVal ? 'pos' : febVal < janVal ? 'neg' : '');
+    const vsBudColor = row.cost ? (febVal < budVal ? 'pos' : febVal > budVal ? 'neg' : '') : (febVal > budVal ? 'pos' : febVal < budVal ? 'neg' : '');
+    const yoyColor = row.cost ? (febVal < fy25Val ? 'pos' : febVal > fy25Val ? 'neg' : '') : (febVal > fy25Val ? 'pos' : febVal < fy25Val ? 'neg' : '');
+    
+    const collapseClass = row.collapsible ? `collapse-toggle ${collapsed[row.key] ? 'collapsed' : ''}` : '';
+    const clickHandler = row.collapsible ? `onclick="toggleCollapse('${row.key}')"` : (row.clickable ? `onclick="drillDown('${row.key}')"` : '');
+    
+    tbody += `<tr class="${rowClass}" data-parent="${row.parent || ''}">
+      <td><span class="${collapseClass}" ${clickHandler}>${row.label}</span></td>
+      <td class="num">${fmtNum(displayFeb)}</td>
+      <td class="num">${fmtNum(displayJan)}</td>
+      <td><span class="delta delta-fc ${vsJanColor}">${fmtPct(vsJanPct)}</span></td>
+      <td class="num">${fmtNum(displayBud)}</td>
+      <td><span class="delta delta-bud ${vsBudColor}">${fmtPct(vsBudPct)}</span></td>
+      <td class="num">${fmtNum(displayFy25)}</td>
+      <td><span class="delta delta-yoy ${yoyColor}">${fmtPct(yoyPct)}</span></td>
+    </tr>`;
+  });
+  
+  tbody += '</tbody>';
+  document.getElementById('plTable').innerHTML = thead + tbody;
+}
+
+function toggleCollapse(key) {
+  collapsed[key] = !collapsed[key];
+  renderPLTable();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MONTHLY VIEW
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderMonthlyTable() {
+  const m = DATA.febPV.monthly;
+  const months = DATA.months;
+  
+  let thead = `<thead><tr><th>Account</th>`;
+  months.forEach(mo => { thead += `<th>${mo}</th>`; });
+  thead += `<th>Full Year</th></tr></thead>`;
+  
+  const rows = [
+    { key: 'totalRevenue', label: 'Total Revenue', type: 'subtotal' },
+    { key: 'physical', label: 'Physical' },
+    { key: 'digital', label: 'Digital' },
+    { key: 'newBusiness', label: 'New Business' },
+    { key: 'licensing', label: 'Licensing' },
+    { key: 'grossMargin', label: 'Gross Margin', type: 'major' },
+    { key: 'variableMktg', label: 'Variable Marketing', cost: true },
+    { key: 'arCosts', label: 'A&R Costs', cost: true },
+    { key: 'overhead', label: 'Overhead', cost: true },
+    { key: 'oibda', label: 'OIBDA', type: 'grand' }
+  ];
+  
+  let tbody = '<tbody>';
+  rows.forEach(row => {
+    let rowClass = row.type === 'subtotal' ? 'row-subtotal' : row.type === 'major' ? 'row-major' : row.type === 'grand' ? 'row-grand' : '';
+    tbody += `<tr class="${rowClass}"><td>${row.label}</td>`;
+    
+    let total = 0;
+    m[row.key].forEach(val => {
+      const display = row.cost ? -Math.abs(val) : val;
+      total += val;
+      tbody += `<td class="num">${fmtNum(display)}</td>`;
+    });
+    
+    const displayTotal = row.cost ? -Math.abs(total) : total;
+    tbody += `<td class="num" style="font-weight:600">${fmtNum(displayTotal)}</td></tr>`;
+  });
+  tbody += '</tbody>';
+  
+  document.getElementById('monthlyTable').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// R&O PAGE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderROPage() {
+  const r = DATA.ro.risks;
+  const o = DATA.ro.opportunities;
+  
+  // Risk details
+  let riskHtml = '';
+  Object.entries(r).forEach(([key, val]) => {
+    if (val.fy > 0) {
+      riskHtml += `<div class="ro-item"><span>${key.charAt(0).toUpperCase() + key.slice(1)}</span><span class="neg">¥${(val.fy/1000000).toFixed(1)}M</span></div>`;
+    }
+  });
+  document.getElementById('riskDetails').innerHTML = riskHtml;
+  
+  // Opportunity details
+  let oppHtml = '';
+  Object.entries(o).forEach(([key, val]) => {
+    if (val.fy > 0) {
+      oppHtml += `<div class="ro-item"><span>${key.charAt(0).toUpperCase() + key.slice(1)}</span><span class="pos">¥${(val.fy/1000000).toFixed(1)}M</span></div>`;
+    }
+  });
+  document.getElementById('oppDetails').innerHTML = oppHtml;
+  
+  // R&O Table
+  let thead = `<thead><tr><th>Channel</th><th>Risks (FY)</th><th>Q3</th><th>Q4</th><th>Opps (FY)</th><th>Q3</th><th>Q4</th><th>Net</th></tr></thead>`;
+  let tbody = '<tbody>';
+  
+  ['physical', 'digital', 'newBusiness', 'licensing', 'sga'].forEach(ch => {
+    const risk = r[ch] || { fy: 0, q3: 0, q4: 0 };
+    const opp = o[ch] || { fy: 0, q3: 0, q4: 0 };
+    const net = opp.fy - risk.fy;
+    const netClass = net > 0 ? 'pos' : net < 0 ? 'neg' : '';
+    
+    tbody += `<tr>
+      <td>${ch.charAt(0).toUpperCase() + ch.slice(1).replace(/([A-Z])/g, ' $1')}</td>
+      <td class="num neg">${risk.fy > 0 ? '(' + fmtNum(risk.fy) + ')' : '—'}</td>
+      <td class="num">${risk.q3 > 0 ? fmtNum(risk.q3) : '—'}</td>
+      <td class="num">${risk.q4 > 0 ? fmtNum(risk.q4) : '—'}</td>
+      <td class="num pos">${opp.fy > 0 ? fmtNum(opp.fy) : '—'}</td>
+      <td class="num">${opp.q3 > 0 ? fmtNum(opp.q3) : '—'}</td>
+      <td class="num">${opp.q4 > 0 ? fmtNum(opp.q4) : '—'}</td>
+      <td class="num ${netClass}">${fmtNum(net)}</td>
+    </tr>`;
+  });
+  
+  const totRisk = DATA.ro.totals.totalRisks;
+  const totOpp = DATA.ro.totals.totalOpps;
+  const totNet = totOpp - totRisk;
+  
+  tbody += `<tr class="row-major">
+    <td>Total</td>
+    <td class="num neg">(${fmtNum(totRisk)})</td>
+    <td></td><td></td>
+    <td class="num pos">${fmtNum(totOpp)}</td>
+    <td></td><td></td>
+    <td class="num neg">${fmtNum(totNet)}</td>
+  </tr>`;
+  tbody += '</tbody>';
+  
+  document.getElementById('roTable').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DRILL DOWN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function drillDown(channel) {
+  showPage(channel === 'newBusiness' ? 'newbiz' : channel);
+  renderChannelPage(channel);
+}
+
+function renderChannelPage(channel) {
+  const feb = DATA.febPV.fullYear;
+  const bud = DATA.budget.fullYear;
+  const fy25 = DATA.fy25.fullYear;
+  
+  const channelData = {
+    physical: {
+      title: 'Physical Revenue',
+      febRev: feb.physical,
+      budRev: bud.physical,
+      fy25Rev: fy25.physical,
+      febGM: feb.gmPhysical,
+      budGM: bud.gmPhysical || feb.gmPhysical,
+      subItems: [
+        { name: 'CD Sales', variance: 500000 },
+        { name: 'Vinyl Sales', variance: 150000 },
+        { name: 'Box Sets', variance: -100000 },
+        { name: 'Other Physical', variance: -50000 }
+      ]
+    },
+    digital: {
+      title: 'Digital Revenue',
+      febRev: feb.digital,
+      budRev: bud.digital,
+      fy25Rev: fy25.digital,
+      febGM: feb.gmDigital,
+      budGM: bud.gmDigital || feb.gmDigital,
+      subItems: [
+        { name: 'Streaming', variance: 162715 },
+        { name: 'Downloads', variance: -50000 },
+        { name: 'Other Digital', variance: 10000 }
+      ]
+    },
+    newBusiness: {
+      title: 'New Business Revenue',
+      febRev: feb.newBusiness,
+      budRev: bud.newBusiness,
+      fy25Rev: fy25.newBusiness,
+      febGM: feb.gmNewBiz,
+      budGM: bud.gmNewBiz || feb.gmNewBiz,
+      subItems: [
+        { name: 'Tour Revenue', variance: -500000 },
+        { name: 'Merchandise', variance: -400000 },
+        { name: 'Artist Management', variance: 22000 },
+        { name: 'Other New Biz', variance: 378000 }
+      ]
+    },
+    licensing: {
+      title: 'Licensing Revenue',
+      febRev: feb.licensing,
+      budRev: bud.licensing,
+      fy25Rev: fy25.licensing,
+      febGM: feb.gmLicensing,
+      budGM: bud.gmLicensing || feb.gmLicensing,
+      subItems: [
+        { name: 'Brand Revenue', variance: 450000 },
+        { name: 'Sync Revenue', variance: -245000 },
+        { name: 'Broadcast Fee', variance: 445000 },
+        { name: 'MUR Revenue', variance: -181000 },
+        { name: 'Other Licensing', variance: 31000 }
+      ]
+    }
+  };
+  
+  const data = channelData[channel];
+  const pageId = channel === 'newBusiness' ? 'newbiz' : channel;
+  const contentId = pageId + 'Content';
+  
+  const variance = data.febRev - data.budRev;
+  const positiveItems = data.subItems.filter(i => i.variance > 0);
+  const negativeItems = data.subItems.filter(i => i.variance < 0);
+  
+  let html = `
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 24px;">
+      <div class="kpi-card">
+        <div class="kpi-label">Feb PV Revenue</div>
+        <div class="kpi-value">${fmtNum(data.febRev)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Budget</div>
+        <div class="kpi-value">${fmtNum(data.budRev)}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">vs Budget</div>
+        <div class="kpi-value ${variance >= 0 ? 'pos' : 'neg'}">${fmtNum(variance)}</div>
+        <div class="kpi-margin">${fmtPct(calcVar(data.febRev, data.budRev))}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">YoY Growth</div>
+        <div class="kpi-value">${fmtPct(calcVar(data.febRev, data.fy25Rev))}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Variance Analysis (Drag & Drop)</div>
+        <div class="card-subtitle">Organize variance drivers</div>
+      </div>
+      <div class="modal-body">
+        <div class="variance-container">
+          <div class="variance-box positive" ondragover="allowDrop(event)" ondrop="drop(event, 'positive')">
+            <div class="variance-box-title">
+              <span style="color:var(--green)">Favorable Variance</span>
+              <span id="posTotal">${fmtNum(positiveItems.reduce((s,i) => s + i.variance, 0))}</span>
+            </div>
+            <div id="positiveItems">
+              ${positiveItems.map(i => `
+                <div class="variance-item" draggable="true" ondragstart="drag(event)" data-value="${i.variance}">
+                  <span class="variance-item-name">${i.name}</span>
+                  <span class="variance-item-value pos">${fmtNum(i.variance)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+          <div class="variance-box negative" ondragover="allowDrop(event)" ondrop="drop(event, 'negative')">
+            <div class="variance-box-title">
+              <span style="color:var(--red)">Unfavorable Variance</span>
+              <span id="negTotal">${fmtNum(negativeItems.reduce((s,i) => s + i.variance, 0))}</span>
+            </div>
+            <div id="negativeItems">
+              ${negativeItems.map(i => `
+                <div class="variance-item" draggable="true" ondragstart="drag(event)" data-value="${i.variance}">
+                  <span class="variance-item-name">${i.name}</span>
+                  <span class="variance-item-value neg">${fmtNum(i.variance)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.getElementById(contentId).innerHTML = html;
+}
+
+// Drag & Drop
+function allowDrop(ev) { ev.preventDefault(); }
+function drag(ev) { ev.dataTransfer.setData("text", ev.target.outerHTML); ev.target.classList.add('dragging'); }
+function drop(ev, target) {
+  ev.preventDefault();
+  const data = ev.dataTransfer.getData("text");
+  const container = document.getElementById(target + 'Items');
+  if (container) {
+    container.innerHTML += data;
+    document.querySelector('.dragging')?.remove();
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GL ANALYZER
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderGLTable() {
+  if (DATA.glData.length === 0) {
+    document.getElementById('glTable').innerHTML = `
+      <tbody><tr><td colspan="8" style="text-align:center;padding:40px;color:var(--text-dim)">
+        Upload Raw_Data.xlsx to view GL transactions
+      </td></tr></tbody>
+    `;
+    document.getElementById('glCount').textContent = 'No data loaded';
+    return;
+  }
+  
+  const period = document.getElementById('glPeriod').value;
+  const acctType = document.getElementById('glAcctType').value;
+  const search = document.getElementById('glSearch').value.toLowerCase();
+  
+  let filtered = DATA.glData.filter(row => {
+    if (period !== 'all' && !row.Period.includes(period)) return false;
+    if (acctType === 'revenue' && (row.L5AccountCode < 300000 || row.L5AccountCode >= 400000)) return false;
+    if (acctType === 'cos' && (row.L5AccountCode < 400000 || row.L5AccountCode >= 500000)) return false;
+    if (acctType === 'expense' && (row.L5AccountCode < 500000 || row.L5AccountCode >= 900000)) return false;
+    if (search && !row.L5AccountDesc.toLowerCase().includes(search) && !row.LineDescription.toLowerCase().includes(search)) return false;
+    return true;
+  });
+  
+  // Aggregate by account
+  const agg = {};
+  filtered.forEach(row => {
+    const key = row.L5AccountCode;
+    if (!agg[key]) {
+      agg[key] = { code: row.L5AccountCode, desc: row.L5AccountDesc, amount: 0, count: 0 };
+    }
+    agg[key].amount += row.Amount;
+    agg[key].count++;
+  });
+  
+  const sorted = Object.values(agg).sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount)).slice(0, 100);
+  
+  let thead = `<thead><tr><th>Account Code</th><th>Description</th><th>Txn Count</th><th>Net Amount</th></tr></thead>`;
+  let tbody = '<tbody>';
+  
+  sorted.forEach(row => {
+    tbody += `<tr>
+      <td class="num">${row.code}</td>
+      <td>${row.desc}</td>
+      <td class="num">${row.count.toLocaleString()}</td>
+      <td class="num ${row.amount >= 0 ? 'pos' : 'neg'}">${fmtNum(row.amount, false)}</td>
+    </tr>`;
+  });
+  
+  tbody += '</tbody>';
+  document.getElementById('glTable').innerHTML = thead + tbody;
+  document.getElementById('glCount').textContent = `${filtered.length.toLocaleString()} transactions · ${sorted.length} accounts shown`;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FILE UPLOAD
+// ═══════════════════════════════════════════════════════════════════════════
+
+function handleUpload(files) {
+  Array.from(files).forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const data = new Uint8Array(e.target.result);
+      const workbook = XLSX.read(data, { type: 'array' });
+      
+      if (file.name.includes('Raw_Data')) {
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(sheet);
+        DATA.glData = json.map(row => ({
+          Period: row['Period'] || '',
+          L5AccountCode: parseInt(row['L5 Account Code']) || 0,
+          L5AccountDesc: row['L5 Account Desc'] || '',
+          DeptCode: row['Department Code'] || '',
+          DeptDesc: row['Department Desc'] || '',
+          LineDescription: row['Line Description'] || '',
+          Amount: parseFloat(row['Net Dr & Cr (Amount Accounted)']) || 0
+        }));
+        renderGLTable();
+        alert(`Loaded ${DATA.glData.length.toLocaleString()} GL transactions`);
+      }
+      
+      if (file.name.includes('PV') || file.name.includes('Flash')) {
+        // Would parse PV data here
+        alert('PV file detected - refresh data would happen here');
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  const page = document.getElementById('page-' + pageId);
+  if (page) page.classList.add('active');
+  
+  const navItem = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+  if (navItem) navItem.classList.add('active');
+  
+  // Render page-specific content
+  if (pageId === 'monthly') renderMonthlyTable();
+  if (pageId === 'ro') renderROPage();
+  if (pageId === 'gl') renderGLTable();
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+  item.addEventListener('click', () => showPage(item.dataset.page));
+});
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    this.parentElement.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    // View/scenario switching logic here
+  });
+});
+
+function exportData() {
+  // Export logic
+  alert('Export feature - would generate CSV/Excel');
+}
+
+function closeDrill() {
+  document.getElementById('drillModal').classList.remove('active');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Load SheetJS for Excel parsing
+const script = document.createElement('script');
+script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+document.head.appendChild(script);
+
+// GL filter listeners
+['glPeriod', 'glDept', 'glAcctType', 'glSearch'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('change', renderGLTable);
+  if (el && id === 'glSearch') el.addEventListener('input', renderGLTable);
+});
+
+// Initial render
+renderKPIs();
+renderPLTable();
+renderGLTable();
+</script>
+
+</body>
+</html>
