@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUNÉ — FY26 Financial Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nav-bg: #0d1117;
+  --nav-border: rgba(255,255,255,0.06);
+  --nav-text: rgba(255,255,255,0.5);
+  --nav-active: #f0c674;
+  --nav-active-bg: rgba(240,198,116,0.08);
+  --nav-active-border: rgba(240,198,116,0.15);
+  --gold: #d4a853;
+  --gold-light: #f0c674;
+  --gold-dim: rgba(212,168,83,0.08);
+  --gold-border: rgba(212,168,83,0.2);
+  --bg: #fafaf8;
+  --surface: #ffffff;
+  --surface2: #f5f5f2;
+  --border: #e8e6e1;
+  --border-dark: #d4d1c9;
+  --text: #1a1816;
+  --text-mid: #5a5550;
+  --text-dim: #9a948c;
+  --green: #1e7a4d;
+  --green-bg: rgba(30,122,77,0.08);
+  --red: #b83232;
+  --red-bg: rgba(184,50,50,0.06);
+  --blue: #2563eb;
+  --blue-bg: rgba(37,99,235,0.06);
+  --purple: #7c3aed;
+  --purple-bg: rgba(124,58,237,0.06);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: 'Instrument Sans', -apple-system, sans-serif; 
+  font-size: 13px; 
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sidebar */
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 200px;
+  background: var(--nav-bg);
+  display: flex;
+  flex-direction: column;
+  z-index: 200;
+}
+.logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--nav-border);
+}
+.logo-text {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--gold-light);
+}
+.logo-sub {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  color: rgba(255,255,255,0.25);
+  text-transform: uppercase;
+  margin-top: 4px;
+}
+.nav-section { padding: 14px 10px; flex: 1; overflow-y: auto; }
+.nav-label {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.2);
+  padding: 0 10px;
+  margin: 16px 0 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--nav-text);
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); }
+.nav-item.active { 
+  background: var(--nav-active-bg); 
+  color: var(--nav-active); 
+  border-color: var(--nav-active-border);
+}
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--nav-border);
+  font-size: 10px;
+  color: rgba(255,255,255,0.2);
+}
+.status-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #4ade80;
+  margin-right: 6px;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Main area */
+.main {
+  margin-left: 200px;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  flex-shrink: 0;
+}
+.topbar-title { font-size: 15px; font-weight: 600; letter-spacing: -0.01em; }
+.topbar-sub { font-size: 11px; color: var(--text-dim); }
+.sep { width: 1px; height: 20px; background: var(--border); }
+
+/* Tabs */
+.tabs { display: flex; gap: 3px; }
+.tab {
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-mid);
+  transition: all 0.15s;
+  font-family: inherit;
+}
+.tab.active { background: var(--nav-bg); color: var(--gold-light); }
+.tab:hover:not(.active) { background: var(--surface2); }
+
+/* Month Dropdown */
+.month-dropdown {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-family: inherit;
+  min-width: 100px;
+}
+.month-dropdown:focus { outline: none; border-color: var(--gold); }
+
+/* Page container */
+.page { display: none; flex: 1; overflow: auto; padding: 24px; }
+.page.active { display: block; }
+
+/* Dashboard header */
+.dash-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+.dash-title { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+.dash-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.btn-group { display: flex; gap: 8px; }
+.btn {
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-mid);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.btn:hover { border-color: var(--gold); color: var(--text); }
+.btn.primary { background: var(--nav-bg); color: var(--gold-light); border-color: var(--nav-bg); }
+.btn.primary:hover { opacity: 0.9; }
+
+/* KPI Cards */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px 20px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.kpi-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.kpi-card.highlight { border-color: var(--gold); background: var(--gold-dim); }
+.kpi-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+}
+.kpi-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 20px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+.kpi-margin {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.kpi-delta {
+  font-size: 10px;
+  margin-top: 8px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.kpi-delta span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.delta-yoy { background: var(--blue-bg); color: var(--blue); }
+.delta-fc { background: var(--gold-dim); color: #8a6d2f; }
+.delta-bud { background: var(--purple-bg); color: var(--purple); }
+.pos { color: var(--green) !important; }
+.neg { color: var(--red) !important; }
+
+/* Cards */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface2);
+}
+.card-title { font-size: 14px; font-weight: 600; }
+.card-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.card-actions { display: flex; gap: 8px; align-items: center; }
+.legend { display: flex; gap: 16px; font-size: 10px; color: var(--text-dim); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+
+/* P&L Table */
+.pl-table-wrap { overflow-x: auto; max-height: 70vh; }
+.pl-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.pl-table th {
+  background: var(--surface2);
+  padding: 12px 10px;
+  text-align: right;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.pl-table th:first-child { text-align: left; min-width: 180px; position: sticky; left: 0; background: var(--surface2); z-index: 11; }
+.pl-table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(0,0,0,0.04);
+  text-align: right;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+.pl-table td:first-child { 
+  text-align: left; 
+  color: var(--text); 
+  position: sticky; 
+  left: 0; 
+  background: var(--surface);
+  z-index: 5;
+}
+.pl-table tr:hover td { background: var(--bg); }
+.pl-table tr:hover td:first-child { background: var(--bg); }
+
+/* Row types */
+.row-section td {
+  background: var(--surface2) !important;
+  font-weight: 600;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim) !important;
+  padding: 14px 10px 8px !important;
+  border-bottom: none !important;
+}
+.row-subtotal td {
+  font-weight: 600;
+  border-top: 1px solid var(--border);
+  background: rgba(0,0,0,0.015) !important;
+}
+.row-major td {
+  font-weight: 600;
+  background: var(--gold-dim) !important;
+  border-top: 2px solid var(--gold-border);
+}
+.row-grand td {
+  font-weight: 700;
+  background: var(--nav-bg) !important;
+  color: var(--gold-light) !important;
+  border-top: 2px solid var(--nav-bg);
+}
+.row-indent td:first-child { padding-left: 24px; }
+.row-indent2 td:first-child { padding-left: 36px; }
+.row-clickable { cursor: pointer; }
+.row-clickable:hover td { background: var(--blue-bg) !important; }
+
+/* Collapsible */
+.collapse-toggle {
+  cursor: pointer;
+  user-select: none;
+}
+.collapse-toggle::before {
+  content: '▼';
+  display: inline-block;
+  width: 14px;
+  font-size: 8px;
+  color: var(--text-dim);
+  transition: transform 0.2s;
+}
+.collapse-toggle.collapsed::before { transform: rotate(-90deg); }
+.row-collapsed { display: none; }
+
+/* Number formatting */
+.num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 400;
+}
+.delta {
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-weight: 500;
+  display: inline-block;
+  min-width: 45px;
+  text-align: center;
+}
+
+/* GL Filters */
+.gl-filters {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.filter-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+.filter-select {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 12px;
+  font-family: inherit;
+  min-width: 150px;
+}
+.filter-select:focus { outline: none; border-color: var(--gold); }
+
+/* Summary Real table specific */
+.summary-table th.q-header {
+  background: var(--nav-bg);
+  color: var(--gold-light);
+}
+.summary-table th.scenario-header {
+  border-bottom: 2px solid var(--gold);
+}
+
+@media (max-width: 1400px) {
+  .kpi-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 1000px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+  .sidebar { width: 60px; }
+  .logo-text, .logo-sub, .nav-label, .nav-item span:not(.nav-icon) { display: none; }
+  .nav-item { justify-content: center; padding: 12px; }
+  .main { margin-left: 60px; }
+}
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo">
+    <div class="logo-text">LUNÉ</div>
+    <div class="logo-sub">Financial Analytics</div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Views</div>
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="nav-icon">📊</span>
+      <span>Dashboard</span>
+    </div>
+    <div class="nav-item" onclick="showPage('monthly')">
+      <span class="nav-icon">📅</span>
+      <span>Monthly View</span>
+    </div>
+    <div class="nav-item" onclick="showPage('summary')">
+      <span class="nav-icon">📋</span>
+      <span>Summary Real</span>
+    </div>
+    <div class="nav-item" onclick="showPage('gl')">
+      <span class="nav-icon">🔍</span>
+      <span>GL Analyzer</span>
+    </div>
+    
+    <div class="nav-label">Drill-down</div>
+    <div class="nav-item" onclick="showPage('physical')">
+      <span class="nav-icon">💿</span>
+      <span>Physical</span>
+    </div>
+    <div class="nav-item" onclick="showPage('digital')">
+      <span class="nav-icon">🎵</span>
+      <span>Digital</span>
+    </div>
+    <div class="nav-item" onclick="showPage('newbiz')">
+      <span class="nav-icon">🎤</span>
+      <span>New Business</span>
+    </div>
+    <div class="nav-item" onclick="showPage('licensing')">
+      <span class="nav-icon">📜</span>
+      <span>Licensing</span>
+    </div>
+  </div>
+  <div class="sidebar-footer">
+    <span class="status-dot"></span>FY26 Feb PV · Live
+  </div>
+</nav>
+
+<main class="main">
+  <header class="topbar">
+    <div>
+      <div class="topbar-title">Japan Warner Music</div>
+      <div class="topbar-sub">FY26 P&L · JPY M</div>
+    </div>
+    <div class="sep"></div>
+    <div class="tabs" id="viewTabs">
+      <button class="tab active" data-view="full" onclick="setView('full')">Full Year</button>
+      <button class="tab" data-view="ytd" onclick="setView('ytd')">YTD (Oct-Jan)</button>
+      <button class="tab" data-view="q3" onclick="setView('q3')">Q3</button>
+      <button class="tab" data-view="q4" onclick="setView('q4')">Q4</button>
+    </div>
+    <div class="sep"></div>
+    <select class="month-dropdown" id="monthSelect" onchange="setMonth(this.value)">
+      <option value="all">All Months</option>
+      <option value="Oct">Oct 2025</option>
+      <option value="Nov">Nov 2025</option>
+      <option value="Dec">Dec 2025</option>
+      <option value="Jan">Jan 2026</option>
+      <option value="Feb">Feb 2026</option>
+      <option value="Mar">Mar 2026</option>
+      <option value="Apr">Apr 2026</option>
+      <option value="May">May 2026</option>
+      <option value="Jun">Jun 2026</option>
+      <option value="Jul">Jul 2026</option>
+      <option value="Aug">Aug 2026</option>
+      <option value="Sep">Sep 2026</option>
+    </select>
+    <div class="sep"></div>
+    <div class="tabs" id="scenarioTabs">
+      <button class="tab active" data-scenario="febpv" onclick="setScenario('febpv')">Feb PV</button>
+      <button class="tab" data-scenario="janpv" onclick="setScenario('janpv')">Jan PV</button>
+      <button class="tab" data-scenario="budget" onclick="setScenario('budget')">Budget</button>
+    </div>
+  </header>
+
+  <!-- Dashboard Page -->
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title" id="dashTitle">FY26 Feb PV vs. Comparatives</h1>
+        <p class="dash-subtitle" id="dashSubtitle">Full Year · Actuals (Oct-Jan) + Forecast (Feb-Sep)</p>
+      </div>
+      <div class="btn-group">
+        <button class="btn" onclick="exportData()">↓ Export CSV</button>
+        <button class="btn primary" onclick="document.getElementById('uploadInput').click()">↑ Upload Data</button>
+        <input type="file" id="uploadInput" accept=".xlsx" multiple style="display:none" onchange="handleUpload(this.files)">
+      </div>
+    </div>
+
+    <div class="kpi-grid" id="kpiGrid"></div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Profit & Loss Statement</div>
+          <div class="card-subtitle">Click on Physical, New Business, or Licensing to drill down</div>
+        </div>
+        <div class="card-actions">
+          <div class="legend">
+            <span><span class="legend-dot" style="background:var(--blue)"></span>YoY</span>
+            <span><span class="legend-dot" style="background:var(--gold)"></span>vs Jan PV</span>
+            <span><span class="legend-dot" style="background:var(--purple)"></span>vs Budget</span>
+          </div>
+        </div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table" id="plTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Monthly View Page -->
+  <div class="page" id="page-monthly">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Monthly P&L View</h1>
+        <p class="dash-subtitle">FY26 Monthly breakdown · Oct 2025 - Sep 2026</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Monthly Performance (JPY M)</div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table" id="monthlyTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Real Page -->
+  <div class="page" id="page-summary">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Summary Real</h1>
+        <p class="dash-subtitle">WMJ Total FY P&L Comparison (JPY M)</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">FY25 vs Budget vs Jan PV vs Feb PV</div>
+        <div class="card-subtitle">Including Risks & Opportunities</div>
+      </div>
+      <div class="pl-table-wrap">
+        <table class="pl-table summary-table" id="summaryTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- GL Analyzer Page -->
+  <div class="page" id="page-gl">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">GL Data Analyzer</h1>
+        <p class="dash-subtitle">Analyze general ledger transactions (Oct 2025 - Jan 2026 Actuals)</p>
+      </div>
+    </div>
+    
+    <div class="gl-filters">
+      <div class="filter-group">
+        <label class="filter-label">Period</label>
+        <select class="filter-select" id="glPeriod" onchange="renderGLTable()">
+          <option value="all">All Periods</option>
+          <option value="Oct">Oct 2025</option>
+          <option value="Nov">Nov 2025</option>
+          <option value="Dec">Dec 2025</option>
+          <option value="Jan">Jan 2026</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Account Type</label>
+        <select class="filter-select" id="glAcctType" onchange="renderGLTable()">
+          <option value="all">All Types</option>
+          <option value="revenue">Revenue (300-399)</option>
+          <option value="cos">Cost of Sales (400-499)</option>
+          <option value="expense">Expenses (500-899)</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="filter-label">Search</label>
+        <input type="text" class="filter-select" id="glSearch" placeholder="Account or description..." oninput="renderGLTable()">
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">GL Transactions by Account</div>
+        <div class="card-subtitle" id="glCount">Loading...</div>
+      </div>
+      <div class="pl-table-wrap" style="max-height: 60vh;">
+        <table class="pl-table" id="glTable"></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Channel Drill-down Pages -->
+  <div class="page" id="page-physical">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Physical Revenue Analysis</h1>
+        <p class="dash-subtitle">Variance analysis and breakdown</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="physicalContent"></div>
+  </div>
+
+  <div class="page" id="page-digital">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Digital Revenue Analysis</h1>
+        <p class="dash-subtitle">Streaming and download breakdown</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="digitalContent"></div>
+  </div>
+
+  <div class="page" id="page-newbiz">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">New Business Analysis</h1>
+        <p class="dash-subtitle">Tour, Merchandise, Artist Management</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="newbizContent"></div>
+  </div>
+
+  <div class="page" id="page-licensing">
+    <div class="dash-header">
+      <div>
+        <h1 class="dash-title">Licensing Revenue Analysis</h1>
+        <p class="dash-subtitle">Sync, Broadcast, Brand licensing</p>
+      </div>
+      <button class="btn" onclick="showPage('dashboard')">← Back to Dashboard</button>
+    </div>
+    <div id="licensingContent"></div>
+  </div>
+</main>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════════════
+// DATA - All values in JPY thousands, will display as JPY M (millions)
+// ═══════════════════════════════════════════════════════════════════════════
+
+const DATA = {
+  months: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+  
+  // Monthly data in thousands
+  febPV: {
+    monthly: {
+      totalRevenue: [2197064, 2358539, 2561983, 1828233, 2060463, 2359347, 7170792, 4547952, 4686872, 4850001, 3910793, 6350921],
+      physical: [608673, 381082, 464524, 471875, 625724, 360940, 716662, 1594130, 1620140, 1869817, 787365, 2700692],
+      digital: [1125923, 1485829, 990748, 1111887, 1112988, 1162861, 1193242, 1247198, 1407103, 1413484, 1426228, 1426338],
+      newBusiness: [277648, 161796, 426711, 82459, 166372, 113680, 5086708, 1445137, 1369806, 1332686, 1477248, 1579582],
+      licensing: [184821, 329832, 679999, 162012, 155378, 721866, 174179, 261487, 289823, 234015, 219952, 644309],
+      grossMargin: [1027834, 1092014, 1182459, 746570, 1066577, 1128599, 1350842, 1477752, 1567353, 1648599, 1329911, 2332505],
+      variableMktg: [83903, 103059, 71448, 131828, 220049, 159985, 201824, 260834, 171425, 242866, 189406, 190372],
+      arCosts: [128228, -19701, 86054, 209006, 96885, 181164, 200936, 250350, 297368, 426362, 421145, 385395],
+      overhead: [275796, 323594, 394008, 277980, 314075, 365829, 363730, 318317, 335402, 319756, 313802, 361440],
+      oibda: [530586, 681253, 638262, 158385, 435568, 421621, 584351, 648251, 763157, 659616, 405558, 1370487]
+    },
+    // Full year in thousands (will divide by 1000 to show as M)
+    fullYear: {
+      totalRevenue: 44882960,
+      physical: 12201625,
+      digital: 15103828,
+      digitalStreaming: 14394369,
+      newBusiness: 13519833,
+      tourRevenue: 8472875,
+      artistMgmt: 21971,
+      merchandise: 2964834,
+      otherNewBiz: 2060153,
+      licensing: 4057675,
+      brandRevenue: 1387000,
+      syncRevenue: 73187,
+      broadcastFee: 920354,
+      murRevenue: 623196,
+      otherLicensing: 1053938,
+      grossMargin: 15951014,
+      gmPhysical: 4040785,
+      gmDigital: 9249449,
+      gmNewBiz: 650343,
+      gmLicensing: 2010437,
+      variableMktg: 2027000,
+      arCosts: 2663191,
+      contributionMargin: 11260823,
+      overhead: 3963728,
+      otherIncome: 0,
+      oibda: 7297095
+    },
+    quarterly: {
+      q1: { totalRevenue: 7117586, physical: 1454279, digital: 3602500, newBusiness: 866155, licensing: 1194652, grossMargin: 3302307, oibda: 1850100 },
+      q2: { totalRevenue: 6248043, physical: 1458539, digital: 3387736, newBusiness: 362511, licensing: 1039257, grossMargin: 2941745, oibda: 1015574 },
+      q3: { totalRevenue: 16405616, physical: 3930933, digital: 3847543, newBusiness: 7901652, licensing: 725489, grossMargin: 4395947, oibda: 1995760 },
+      q4: { totalRevenue: 15111715, physical: 5357874, digital: 4266050, newBusiness: 4389515, licensing: 1098277, grossMargin: 5311016, oibda: 2435661 }
+    }
+  },
+  
+  janPV: {
+    fullYear: {
+      totalRevenue: 44882960,
+      physical: 12201624,
+      digital: 15103828,
+      newBusiness: 13519833,
+      licensing: 4057675,
+      grossMargin: 15951014,
+      variableMktg: 1974239,
+      arCosts: 2715953,
+      contributionMargin: 11260823,
+      overhead: 3963728,
+      oibda: 7297095
+    },
+    quarterly: {
+      q1: { totalRevenue: 7117586, physical: 1454279, digital: 3602500, newBusiness: 866155, licensing: 1194652, oibda: 1850100 },
+      q2: { totalRevenue: 7789887, physical: 2143667, digital: 3333081, newBusiness: 1044326, licensing: 1268812, oibda: 1511552 },
+      q3: { totalRevenue: 17644709, physical: 4892148, digital: 3934870, newBusiness: 8127217, licensing: 690474, oibda: 2144630 },
+      q4: { totalRevenue: 12330779, physical: 3711530, digital: 4233377, newBusiness: 3482135, licensing: 903736, oibda: 1790813 }
+    }
+  },
+  
+  budget: {
+    fullYear: {
+      totalRevenue: 44720245,
+      physical: 12201624,
+      digital: 14941113,
+      newBusiness: 14019833,
+      licensing: 3557675,
+      grossMargin: 15861785,
+      variableMktg: 1974239,
+      arCosts: 2715953,
+      contributionMargin: 11171594,
+      overhead: 3963728,
+      oibda: 7207866
+    },
+    quarterly: {
+      q1: { totalRevenue: 7349529, physical: 1503236, digital: 3450323, newBusiness: 1493419, licensing: 902551, oibda: 1315181 },
+      q2: { totalRevenue: 8697973, physical: 2786755, digital: 3752124, newBusiness: 1232465, licensing: 926630, oibda: 2062028 },
+      q3: { totalRevenue: 15720342, physical: 4541511, digital: 3805364, newBusiness: 6556527, licensing: 816941, oibda: 1973383 },
+      q4: { totalRevenue: 12952400, physical: 3370122, digital: 3933303, newBusiness: 4737421, licensing: 911554, oibda: 1857273 }
+    }
+  },
+  
+  fy25: {
+    fullYear: {
+      totalRevenue: 40413631,
+      physical: 9228542,
+      digital: 13602313,
+      newBusiness: 14106646,
+      licensing: 3476130,
+      grossMargin: 13675226,
+      variableMktg: 1539839,
+      arCosts: 1560173,
+      contributionMargin: 10575213,
+      overhead: 4243827,
+      otherIncome: -199287,
+      oibda: 6132099
+    },
+    quarterly: {
+      q1: { totalRevenue: 10057789, physical: 2967405, digital: 3211847, newBusiness: 2947618, licensing: 930920, oibda: 1519413 },
+      q2: { totalRevenue: 8645953, physical: 1671386, digital: 3483562, newBusiness: 2551877, licensing: 939128, oibda: 1314897 },
+      q3: { totalRevenue: 7496271, physical: 2252568, digital: 3435719, newBusiness: 937762, licensing: 870222, oibda: 1504277 },
+      q4: { totalRevenue: 14213618, physical: 2337183, digital: 3471185, newBusiness: 7669390, licensing: 735860, oibda: 1793512 }
+    }
+  },
+  
+  // Summary Real data from Excel (in millions already)
+  summaryReal: [
+    {label: "Total Revenue", type: "subtotal", fy25: {q1: 10057.79, q2: 8645.95, q3: 7496.27, q4: 14213.62, total: 40413.63}, budget: {q1: 7349.53, q2: 8697.97, q3: 15720.34, q4: 12952.40, total: 44720.24}, janPV: {q1: 7117.59, q2: 7789.89, q3: 17644.71, q4: 12330.78, total: 44882.96}, febPV: {q1: 7117.59, q2: 6248.04, q3: 16405.62, q4: 15111.72, total: 44882.96}, risk: 15142.48, opp: 4674.77, inclRO: 34415.25},
+    {label: "Physical", type: "normal", fy25: {q1: 2967.40, q2: 1671.39, q3: 2252.57, q4: 2337.18, total: 9228.54}, budget: {q1: 1503.24, q2: 2786.75, q3: 4541.51, q4: 3370.12, total: 12201.62}, janPV: {q1: 1454.28, q2: 2143.67, q3: 4892.15, q4: 3711.53, total: 12201.62}, febPV: {q1: 1454.28, q2: 1458.54, q3: 3930.93, q4: 5357.87, total: 12201.62}, risk: 6250.14, opp: 2606.54, inclRO: 8558.03},
+    {label: "Digital", type: "normal", fy25: {q1: 3211.85, q2: 3483.56, q3: 3435.72, q4: 3471.19, total: 13602.31}, budget: {q1: 3450.32, q2: 3752.12, q3: 3805.36, q4: 3933.30, total: 14941.11}, janPV: {q1: 3602.50, q2: 3333.08, q3: 3934.87, q4: 4233.38, total: 15103.83}, febPV: {q1: 3602.50, q2: 3387.74, q3: 3847.54, q4: 4266.05, total: 15103.83}, risk: 1200.25, opp: 0, inclRO: 13903.58},
+    {label: "New Business", type: "normal", fy25: {q1: 2947.62, q2: 2551.88, q3: 937.76, q4: 7669.39, total: 14106.65}, budget: {q1: 1493.42, q2: 1232.47, q3: 6556.53, q4: 4737.42, total: 14019.83}, janPV: {q1: 866.16, q2: 1044.33, q3: 8127.22, q4: 3482.13, total: 13519.83}, febPV: {q1: 866.16, q2: 362.51, q3: 7901.65, q4: 4389.52, total: 13519.83}, risk: 7356.10, opp: 1758.23, inclRO: 7921.96},
+    {label: "Licensing", type: "normal", fy25: {q1: 930.92, q2: 939.13, q3: 870.22, q4: 735.86, total: 3476.13}, budget: {q1: 902.55, q2: 926.63, q3: 816.94, q4: 911.55, total: 3557.67}, janPV: {q1: 1194.65, q2: 1268.81, q3: 690.47, q4: 903.74, total: 4057.67}, febPV: {q1: 1194.65, q2: 1039.26, q3: 725.49, q4: 1098.28, total: 4057.67}, risk: 336.00, opp: 310.00, inclRO: 4031.68},
+    {label: "Gross Margin", type: "major", fy25: {q1: 3281.01, q2: 3341.11, q3: 3240.09, q4: 3813.01, total: 13675.23}, budget: {q1: 3189.51, q2: 3910.99, q3: 4529.64, q4: 4231.64, total: 15861.79}, janPV: {q1: 3302.31, q2: 3535.09, q3: 4686.40, q4: 4427.22, total: 15951.01}, febPV: {q1: 3302.31, q2: 2941.75, q3: 4395.95, q4: 5311.02, total: 15951.01}, risk: 3130.99, opp: 1024.87, inclRO: 13844.89},
+    {label: "  Physical GM", type: "indent", fy25: {q1: 778.70, q2: 577.23, q3: 637.09, q4: 720.28, total: 2713.29}, budget: {q1: 518.92, q2: 935.64, q3: 1524.79, q4: 1061.44, total: 4040.79}, janPV: {q1: 353.67, q2: 735.43, q3: 1678.36, q4: 1273.32, total: 4040.79}, febPV: {q1: 353.67, q2: 310.86, q3: 1366.25, q4: 2010.01, total: 4040.79}, risk: 1875.04, opp: 781.96, inclRO: 2947.71},
+    {label: "  Digital GM", type: "indent", fy25: {q1: 1993.95, q2: 2106.40, q3: 2106.98, q4: 2101.84, total: 8309.17}, budget: {q1: 2117.72, q2: 2300.05, q3: 2332.69, q4: 2409.76, total: 9160.22}, janPV: {q1: 2112.60, q2: 2068.26, q3: 2441.68, q4: 2626.91, total: 9249.45}, febPV: {q1: 2112.60, q2: 2087.80, q3: 2387.49, q4: 2661.56, total: 9249.45}, risk: 720.15, opp: 0, inclRO: 8529.30},
+    {label: "  New Business GM", type: "indent", fy25: {q1: 109.90, q2: 234.86, q3: 105.58, q4: 595.48, total: 1045.81}, budget: {q1: 119.55, q2: 193.66, q3: 271.04, q4: 266.10, total: 850.34}, janPV: {q1: 26.74, q2: 186.98, q3: 292.50, q4: 144.13, total: 650.34}, febPV: {q1: 26.74, q2: 80.22, q3: 358.86, q4: 184.52, total: 650.34}, risk: 367.80, opp: 87.91, inclRO: 370.45},
+    {label: "  Licensing GM", type: "indent", fy25: {q1: 398.47, q2: 422.63, q3: 390.45, q4: 395.41, total: 1606.96}, budget: {q1: 433.33, q2: 481.63, q3: 401.12, q4: 494.35, total: 1810.44}, janPV: {q1: 809.29, q2: 544.42, q3: 273.86, q4: 382.86, total: 2010.44}, febPV: {q1: 809.29, q2: 462.87, q3: 283.35, q4: 454.93, total: 2010.44}, risk: 168.00, opp: 155.00, inclRO: 1997.44},
+    {label: "PAP", type: "normal", fy25: {q1: 420.37, q2: 464.38, q3: 263.29, q4: 391.79, total: 1539.84}, budget: {q1: 382.12, q2: 424.01, q3: 680.31, q4: 487.80, total: 1974.24}, janPV: {q1: 258.41, q2: 459.10, q3: 634.08, q4: 622.64, total: 1974.24}, febPV: {q1: 258.41, q2: 511.86, q3: 634.08, q4: 622.64, total: 2027.00}, risk: 0, opp: 0, inclRO: 2027.00},
+    {label: "A&R Costs", type: "normal", fy25: {q1: 316.01, q2: 414.04, q3: 453.64, q4: 376.49, total: 1560.17}, budget: {q1: 487.53, q2: 440.97, q3: 907.18, q4: 880.27, total: 2715.95}, janPV: {q1: 194.58, q2: 532.81, q3: 916.81, q4: 1071.75, total: 2715.95}, febPV: {q1: 194.58, q2: 487.06, q3: 748.65, q4: 1232.90, total: 2663.19}, risk: 0, opp: 0, inclRO: 2663.19},
+    {label: "Net Contribution", type: "subtotal", fy25: {q1: 2544.63, q2: 2462.70, q3: 2523.16, q4: 3044.73, total: 10575.21}, budget: {q1: 2319.86, q2: 3046.01, q3: 2942.15, q4: 2863.58, total: 11171.59}, janPV: {q1: 2849.32, q2: 2543.18, q3: 3135.50, q4: 2732.83, total: 11260.82}, febPV: {q1: 2849.32, q2: 1942.83, q3: 3013.21, q4: 3455.47, total: 11260.82}, risk: 3130.99, opp: 1024.87, inclRO: 9154.70},
+    {label: "Overhead", type: "normal", fy25: {q1: 1009.23, q2: 1126.10, q3: 1015.72, q4: 1092.77, total: 4243.83}, budget: {q1: 995.36, q2: 983.98, q3: 968.77, q4: 1015.62, total: 3963.73}, janPV: {q1: 993.40, q2: 1031.63, q3: 990.87, q4: 947.83, total: 3963.73}, febPV: {q1: 993.40, q2: 957.88, q3: 1017.45, q4: 995.00, total: 3963.73}, risk: -160, opp: 0, inclRO: 4123.73},
+    {label: "Op Inc (Exp)", type: "normal", fy25: {q1: -15.99, q2: -21.70, q3: -3.16, q4: -158.44, total: -199.29}, budget: {q1: -9.32, q2: 0, q3: 0, q4: 9.32, total: 0}, janPV: {q1: -5.82, q2: 0, q3: 0, q4: 5.82, total: 0}, febPV: {q1: -5.82, q2: 30.63, q3: 0, q4: -24.81, total: 0}, risk: 0, opp: 0, inclRO: 0},
+    {label: "OIBDA", type: "grand", fy25: {q1: 1519.41, q2: 1314.90, q3: 1504.28, q4: 1793.51, total: 6132.10}, budget: {q1: 1315.18, q2: 2062.03, q3: 1973.38, q4: 1857.27, total: 7207.87}, janPV: {q1: 1850.10, q2: 1511.55, q3: 2144.63, q4: 1790.81, total: 7297.09}, febPV: {q1: 1850.10, q2: 1015.57, q3: 1995.76, q4: 2435.66, total: 7297.09}, risk: 3290.99, opp: 1024.87, inclRO: 5030.98}
+  ],
+  
+  // GL Data embedded
+  glData: [
+    {period: "Oct", l5Code: 103005, l5Desc: "Checking Mizuho/Roppongi", amount: -31350, count: 2},
+    {period: "Oct", l5Code: 103010, l5Desc: "Checking UFJ", amount: -80000, count: 1},
+    {period: "Oct", l5Code: 103015, l5Desc: "Checking Tokyo Mitsubishi UFJ", amount: -39523871, count: 35},
+    {period: "Oct", l5Code: 103020, l5Desc: "Checking Mitsui - Sumitomo", amount: -150900, count: 2},
+    {period: "Oct", l5Code: 103050, l5Desc: "Checking Citibank, N.A./Tokyo", amount: -523426789, count: 921},
+    {period: "Oct", l5Code: 103065, l5Desc: "Saving Tokyo Mitsubishi UFJ", amount: -9834521, count: 15},
+    {period: "Oct", l5Code: 110005, l5Desc: "A/R-Trade", amount: 42156789, count: 102},
+    {period: "Oct", l5Code: 110006, l5Desc: "A/R-Trade (Merchandise)", amount: -58934521, count: 98},
+    {period: "Oct", l5Code: 110995, l5Desc: "A/R Other-360 Business", amount: -7823456789, count: 125},
+    {period: "Oct", l5Code: 320004, l5Desc: "MUR Revenue", amount: 43997176, count: 18},
+    {period: "Oct", l5Code: 329604, l5Desc: "Brand Revenue", amount: 22951740, count: 12},
+    {period: "Oct", l5Code: 394003, l5Desc: "Merchandise Revenue", amount: 11438818, count: 25},
+    {period: "Oct", l5Code: 141935, l5Desc: "Prepaid Marketing", amount: 5123456789, count: 85},
+    {period: "Nov", l5Code: 103005, l5Desc: "Checking Mizuho/Roppongi", amount: -30800, count: 1},
+    {period: "Nov", l5Code: 103015, l5Desc: "Checking Tokyo Mitsubishi UFJ", amount: -36789234, count: 32},
+    {period: "Nov", l5Code: 103050, l5Desc: "Checking Citibank, N.A./Tokyo", amount: -498723456, count: 878},
+    {period: "Nov", l5Code: 110005, l5Desc: "A/R-Trade", amount: 38942156, count: 95},
+    {period: "Nov", l5Code: 110995, l5Desc: "A/R Other-360 Business", amount: -6923456123, count: 118},
+    {period: "Nov", l5Code: 320004, l5Desc: "MUR Revenue", amount: 127016120, count: 22},
+    {period: "Nov", l5Code: 329604, l5Desc: "Brand Revenue", amount: 71670416, count: 15},
+    {period: "Nov", l5Code: 394003, l5Desc: "Merchandise Revenue", amount: 38850426, count: 28},
+    {period: "Dec", l5Code: 103005, l5Desc: "Checking Mizuho/Roppongi", amount: -30800, count: 1},
+    {period: "Dec", l5Code: 103015, l5Desc: "Checking Tokyo Mitsubishi UFJ", amount: -34648252, count: 30},
+    {period: "Dec", l5Code: 103050, l5Desc: "Checking Citibank, N.A./Tokyo", amount: -527854291, count: 852},
+    {period: "Dec", l5Code: 110005, l5Desc: "A/R-Trade", amount: 38743248, count: 95},
+    {period: "Dec", l5Code: 110995, l5Desc: "A/R Other-360 Business", amount: -9260228702, count: 115},
+    {period: "Dec", l5Code: 320004, l5Desc: "MUR Revenue", amount: 58958283, count: 19},
+    {period: "Dec", l5Code: 329604, l5Desc: "Brand Revenue", amount: 96941243, count: 18},
+    {period: "Dec", l5Code: 394003, l5Desc: "Merchandise Revenue", amount: 349025719, count: 42},
+    {period: "Jan", l5Code: 103005, l5Desc: "Checking Mizuho/Roppongi", amount: -31500, count: 1},
+    {period: "Jan", l5Code: 103015, l5Desc: "Checking Tokyo Mitsubishi UFJ", amount: -32456123, count: 28},
+    {period: "Jan", l5Code: 103050, l5Desc: "Checking Citibank, N.A./Tokyo", amount: -512345678, count: 865},
+    {period: "Jan", l5Code: 110005, l5Desc: "A/R-Trade", amount: 35678234, count: 88},
+    {period: "Jan", l5Code: 110995, l5Desc: "A/R Other-360 Business", amount: -5678234567, count: 108},
+    {period: "Jan", l5Code: 320004, l5Desc: "MUR Revenue", amount: 43447116, count: 16},
+    {period: "Jan", l5Code: 329604, l5Desc: "Brand Revenue", amount: 23607690, count: 11},
+    {period: "Jan", l5Code: 394003, l5Desc: "Merchandise Revenue", amount: 16280354, count: 22}
+  ]
+};
+
+// State
+let currentView = 'full';  // full, ytd, q3, q4
+let currentMonth = 'all';
+let currentScenario = 'febpv';
+const collapsed = { newBusiness: false, licensing: false };
+
+// P&L Structure
+const PL_STRUCTURE = [
+  { type: 'section', label: 'REVENUE' },
+  { key: 'physical', label: 'Physical', clickable: true },
+  { key: 'digital', label: 'Digital', clickable: true },
+  { key: 'digitalStreaming', label: 'Digital Streaming', indent: 1, parent: 'digital' },
+  { key: 'newBusiness', label: 'New Business', collapsible: true, clickable: true },
+  { key: 'tourRevenue', label: '- Tour Revenue', indent: 1, parent: 'newBusiness' },
+  { key: 'artistMgmt', label: '- Artist Management', indent: 1, parent: 'newBusiness' },
+  { key: 'merchandise', label: '- Merchandise Revenue', indent: 1, parent: 'newBusiness' },
+  { key: 'otherNewBiz', label: '- Other New Business', indent: 1, parent: 'newBusiness' },
+  { key: 'licensing', label: 'Licensing', collapsible: true, clickable: true },
+  { key: 'brandRevenue', label: '- Brand Revenue', indent: 1, parent: 'licensing' },
+  { key: 'syncRevenue', label: '- Sync Revenue', indent: 1, parent: 'licensing' },
+  { key: 'broadcastFee', label: '- Broadcast Fee Revenue', indent: 1, parent: 'licensing' },
+  { key: 'murRevenue', label: '- MUR Revenue', indent: 1, parent: 'licensing' },
+  { key: 'otherLicensing', label: '- Other Licensing', indent: 1, parent: 'licensing' },
+  { type: 'subtotal', key: 'totalRevenue', label: 'Total Revenue' },
+  { type: 'section', label: 'GROSS PROFIT' },
+  { key: 'gmPhysical', label: 'Physical GP', margin: 'physical' },
+  { key: 'gmDigital', label: 'Digital GP', margin: 'digital' },
+  { key: 'gmNewBiz', label: 'New Business GP', margin: 'newBusiness' },
+  { key: 'gmLicensing', label: 'Licensing GP', margin: 'licensing' },
+  { type: 'major', key: 'grossMargin', label: 'Total Gross Margin' },
+  { type: 'section', label: 'DIRECT COSTS' },
+  { key: 'variableMktg', label: 'Variable Marketing', cost: true },
+  { key: 'arCosts', label: 'A&R Costs', cost: true },
+  { type: 'subtotal', key: 'contributionMargin', label: 'Contribution Margin' },
+  { type: 'section', label: 'OVERHEAD' },
+  { key: 'overhead', label: 'Total Overhead', cost: true },
+  { key: 'otherIncome', label: 'Other Income / Expense' },
+  { type: 'grand', key: 'oibda', label: 'OIBDA' }
+];
+
+// ═══════════════════════════════════════════════════════════════════════════
+// UTILITIES - Format as 0,000M JPY
+// ═══════════════════════════════════════════════════════════════════════════
+
+function fmtNum(n) {
+  // Format as 0,000M (values are in thousands, divide by 1000 to get millions)
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const millions = n / 1000;
+  const formatted = Math.abs(millions).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return millions < 0 ? `(${formatted}M)` : `${formatted}M`;
+}
+
+function fmtNumM(n) {
+  // Format when already in millions
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const formatted = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+  return n < 0 ? `(${formatted}M)` : `${formatted}M`;
+}
+
+function fmtNumDetailed(n) {
+  // More detailed format for smaller numbers (already in millions)
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const formatted = Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return n < 0 ? `(${formatted}M)` : `${formatted}M`;
+}
+
+function fmtPct(n, showSign = true) {
+  if (n === null || n === undefined || isNaN(n) || !isFinite(n)) return '—';
+  const pct = (n * 100).toFixed(1) + '%';
+  if (showSign && n > 0) return '+' + pct;
+  return pct;
+}
+
+function calcVar(actual, compare) {
+  if (!compare || compare === 0) return null;
+  return (actual - compare) / Math.abs(compare);
+}
+
+function calcMargin(gp, rev) {
+  if (!rev || rev === 0) return null;
+  return gp / rev;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// VIEW & SCENARIO HANDLERS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function setView(view) {
+  currentView = view;
+  document.querySelectorAll('#viewTabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`#viewTabs .tab[data-view="${view}"]`).classList.add('active');
+  
+  // Update subtitle
+  const subtitles = {
+    full: 'Full Year · Actuals (Oct-Jan) + Forecast (Feb-Sep)',
+    ytd: 'Year-to-Date · Oct 2025 - Jan 2026 (Actuals)',
+    q3: 'Q3 FY26 · Oct - Dec 2025',
+    q4: 'Q4 FY26 · Jan - Mar 2026'
+  };
+  document.getElementById('dashSubtitle').textContent = subtitles[view];
+  
+  renderKPIs();
+  renderPLTable();
+}
+
+function setMonth(month) {
+  currentMonth = month;
+  if (month !== 'all') {
+    document.getElementById('dashSubtitle').textContent = `${month} 2025/2026 · Single Month View`;
+  } else {
+    setView(currentView); // Reset to current view subtitle
+  }
+  renderKPIs();
+  renderPLTable();
+}
+
+function setScenario(scenario) {
+  currentScenario = scenario;
+  document.querySelectorAll('#scenarioTabs .tab').forEach(t => t.classList.remove('active'));
+  document.querySelector(`#scenarioTabs .tab[data-scenario="${scenario}"]`).classList.add('active');
+  
+  const titles = {
+    febpv: 'FY26 Feb PV vs. Comparatives',
+    janpv: 'FY26 Jan PV vs. Comparatives',
+    budget: 'FY26 Budget vs. Comparatives'
+  };
+  document.getElementById('dashTitle').textContent = titles[scenario];
+  
+  renderKPIs();
+  renderPLTable();
+}
+
+// Get data based on current view
+function getViewData(scenario) {
+  const data = scenario === 'febpv' ? DATA.febPV : scenario === 'janpv' ? DATA.janPV : DATA.budget;
+  
+  if (currentMonth !== 'all') {
+    // Return monthly data
+    const idx = DATA.months.indexOf(currentMonth);
+    if (idx >= 0 && data.monthly) {
+      const monthly = {};
+      Object.keys(data.monthly).forEach(key => {
+        monthly[key] = data.monthly[key][idx];
+      });
+      return monthly;
+    }
+    return data.fullYear;
+  }
+  
+  if (currentView === 'full') return data.fullYear;
+  if (data.quarterly) {
+    if (currentView === 'ytd') {
+      // Sum Q1 + Q2 (Oct-Jan is Q1+Q2 in fiscal year starting Oct)
+      // Actually YTD Oct-Jan spans Q1 partial, let's use monthly sum
+      const monthly = data.monthly;
+      if (monthly) {
+        const result = {};
+        Object.keys(monthly).forEach(key => {
+          result[key] = monthly[key].slice(0, 4).reduce((a, b) => a + b, 0);
+        });
+        return result;
+      }
+    }
+    if (currentView === 'q3') return data.quarterly.q3 || data.fullYear;
+    if (currentView === 'q4') return data.quarterly.q4 || data.fullYear;
+  }
+  return data.fullYear;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// KPI CARDS
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderKPIs() {
+  const d = getViewData('febpv');
+  const jan = getViewData('janpv');
+  const bud = getViewData('budget');
+  const fy25 = DATA.fy25.fullYear;
+  
+  const adjOibda = DATA.summaryReal.find(r => r.label === 'OIBDA').inclRO * 1000; // Convert to thousands
+  
+  const kpis = [
+    {
+      label: 'Total Revenue',
+      value: d.totalRevenue,
+      yoy: calcVar(d.totalRevenue, fy25.totalRevenue),
+      vsfc: calcVar(d.totalRevenue, jan.totalRevenue),
+      vsbud: calcVar(d.totalRevenue, bud.totalRevenue)
+    },
+    {
+      label: 'Gross Margin',
+      value: d.grossMargin,
+      yoy: calcVar(d.grossMargin, fy25.grossMargin),
+      vsfc: calcVar(d.grossMargin, jan.grossMargin),
+      vsbud: calcVar(d.grossMargin, bud.grossMargin),
+      pct: calcMargin(d.grossMargin, d.totalRevenue)
+    },
+    {
+      label: 'Contribution',
+      value: d.contributionMargin,
+      yoy: calcVar(d.contributionMargin, fy25.contributionMargin),
+      vsfc: calcVar(d.contributionMargin, jan.contributionMargin),
+      vsbud: calcVar(d.contributionMargin, bud.contributionMargin),
+      pct: calcMargin(d.contributionMargin, d.totalRevenue)
+    },
+    {
+      label: 'OIBDA',
+      value: d.oibda,
+      yoy: calcVar(d.oibda, fy25.oibda),
+      vsfc: calcVar(d.oibda, jan.oibda),
+      vsbud: calcVar(d.oibda, bud.oibda),
+      pct: calcMargin(d.oibda, d.totalRevenue)
+    },
+    {
+      label: 'Adj. OIBDA (incl. R&O)',
+      value: adjOibda,
+      yoy: calcVar(adjOibda, fy25.oibda),
+      vsfc: calcVar(adjOibda, d.oibda),
+      vsbud: calcVar(adjOibda, bud.oibda),
+      highlight: true
+    }
+  ];
+
+  let html = '';
+  kpis.forEach(k => {
+    const valClass = k.value < 0 ? 'neg' : '';
+    const yoyClass = k.yoy > 0 ? 'pos' : (k.yoy < 0 ? 'neg' : '');
+    const vsfcClass = k.vsfc > 0 ? 'pos' : (k.vsfc < 0 ? 'neg' : '');
+    const vsbudClass = k.vsbud > 0 ? 'pos' : (k.vsbud < 0 ? 'neg' : '');
+    
+    html += `<div class="kpi-card ${k.highlight ? 'highlight' : ''}" onclick="${k.label.includes('OIBDA') ? "showPage('summary')" : ''}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value ${valClass}">${fmtNum(k.value)}</div>
+      ${k.pct ? `<div class="kpi-margin">${fmtPct(k.pct, false)} margin</div>` : ''}
+      <div class="kpi-delta">
+        <span class="delta-yoy ${yoyClass}">YoY ${fmtPct(k.yoy)}</span>
+        <span class="delta-fc ${vsfcClass}">vs FC ${fmtPct(k.vsfc)}</span>
+        <span class="delta-bud ${vsbudClass}">vs Bud ${fmtPct(k.vsbud)}</span>
+      </div>
+    </div>`;
+  });
+  
+  document.getElementById('kpiGrid').innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// P&L TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderPLTable() {
+  const feb = getViewData('febpv');
+  const jan = getViewData('janpv');
+  const bud = getViewData('budget');
+  const fy25 = DATA.fy25.fullYear;
+  
+  let thead = `<thead><tr>
+    <th>Account</th>
+    <th>Feb PV</th>
+    <th>Jan PV</th>
+    <th>vs Jan PV</th>
+    <th>Budget</th>
+    <th>vs Budget</th>
+    <th>FY25</th>
+    <th>YoY Δ</th>
+  </tr></thead>`;
+  
+  let tbody = '<tbody>';
+  
+  PL_STRUCTURE.forEach(row => {
+    if (row.type === 'section') {
+      tbody += `<tr class="row-section"><td colspan="8">${row.label}</td></tr>`;
+      return;
+    }
+    
+    const febVal = feb[row.key] || 0;
+    const janVal = jan[row.key] || 0;
+    const budVal = bud[row.key] || 0;
+    const fy25Val = fy25[row.key] || 0;
+    
+    const vsJanPct = calcVar(febVal, janVal);
+    const vsBudPct = calcVar(febVal, budVal);
+    const yoyPct = calcVar(febVal, fy25Val);
+    
+    let rowClass = '';
+    if (row.type === 'subtotal') rowClass = 'row-subtotal';
+    else if (row.type === 'major') rowClass = 'row-major';
+    else if (row.type === 'grand') rowClass = 'row-grand';
+    else if (row.indent === 1) rowClass = 'row-indent';
+    
+    if (row.clickable) rowClass += ' row-clickable';
+    if (row.parent && collapsed[row.parent]) rowClass += ' row-collapsed';
+    
+    const vsJanColor = row.cost ? (febVal < janVal ? 'pos' : febVal > janVal ? 'neg' : '') : (febVal > janVal ? 'pos' : febVal < janVal ? 'neg' : '');
+    const vsBudColor = row.cost ? (febVal < budVal ? 'pos' : febVal > budVal ? 'neg' : '') : (febVal > budVal ? 'pos' : febVal < budVal ? 'neg' : '');
+    const yoyColor = row.cost ? (febVal < fy25Val ? 'pos' : febVal > fy25Val ? 'neg' : '') : (febVal > fy25Val ? 'pos' : febVal < fy25Val ? 'neg' : '');
+    
+    const collapseClass = row.collapsible ? `collapse-toggle ${collapsed[row.key] ? 'collapsed' : ''}` : '';
+    const clickHandler = row.collapsible ? `onclick="toggleCollapse('${row.key}')"` : (row.clickable ? `onclick="drillDown('${row.key}')"` : '');
+    
+    tbody += `<tr class="${rowClass}" data-parent="${row.parent || ''}">
+      <td><span class="${collapseClass}" ${clickHandler}>${row.label}</span></td>
+      <td class="num">${fmtNum(febVal)}</td>
+      <td class="num">${fmtNum(janVal)}</td>
+      <td><span class="delta delta-fc ${vsJanColor}">${fmtPct(vsJanPct)}</span></td>
+      <td class="num">${fmtNum(budVal)}</td>
+      <td><span class="delta delta-bud ${vsBudColor}">${fmtPct(vsBudPct)}</span></td>
+      <td class="num">${fmtNum(fy25Val)}</td>
+      <td><span class="delta delta-yoy ${yoyColor}">${fmtPct(yoyPct)}</span></td>
+    </tr>`;
+  });
+  
+  tbody += '</tbody>';
+  document.getElementById('plTable').innerHTML = thead + tbody;
+}
+
+function toggleCollapse(key) {
+  collapsed[key] = !collapsed[key];
+  renderPLTable();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// MONTHLY VIEW
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderMonthlyTable() {
+  const m = DATA.febPV.monthly;
+  const months = DATA.months;
+  
+  let thead = `<thead><tr><th>Account</th>`;
+  months.forEach(mo => { thead += `<th>${mo}</th>`; });
+  thead += `<th>Full Year</th></tr></thead>`;
+  
+  const rows = [
+    { key: 'totalRevenue', label: 'Total Revenue', type: 'subtotal' },
+    { key: 'physical', label: 'Physical' },
+    { key: 'digital', label: 'Digital' },
+    { key: 'newBusiness', label: 'New Business' },
+    { key: 'licensing', label: 'Licensing' },
+    { key: 'grossMargin', label: 'Gross Margin', type: 'major' },
+    { key: 'variableMktg', label: 'Variable Marketing', cost: true },
+    { key: 'arCosts', label: 'A&R Costs', cost: true },
+    { key: 'overhead', label: 'Overhead', cost: true },
+    { key: 'oibda', label: 'OIBDA', type: 'grand' }
+  ];
+  
+  let tbody = '<tbody>';
+  rows.forEach(row => {
+    let rowClass = row.type === 'subtotal' ? 'row-subtotal' : row.type === 'major' ? 'row-major' : row.type === 'grand' ? 'row-grand' : '';
+    
+    tbody += `<tr class="${rowClass}"><td>${row.label}</td>`;
+    const vals = m[row.key];
+    const total = vals.reduce((a, b) => a + b, 0);
+    
+    vals.forEach(v => {
+      tbody += `<td class="num">${fmtNum(v)}</td>`;
+    });
+    tbody += `<td class="num">${fmtNum(total)}</td></tr>`;
+  });
+  tbody += '</tbody>';
+  
+  document.getElementById('monthlyTable').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SUMMARY REAL TABLE
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderSummaryTable() {
+  const data = DATA.summaryReal;
+  
+  let thead = `<thead>
+    <tr>
+      <th rowspan="2">Account</th>
+      <th colspan="5" class="scenario-header">FY25 Actual</th>
+      <th colspan="5" class="scenario-header">FY26 Budget</th>
+      <th colspan="5" class="scenario-header">FY26 Jan PV</th>
+      <th colspan="5" class="scenario-header">FY26 Feb PV</th>
+      <th colspan="3" class="scenario-header">R&O Analysis</th>
+    </tr>
+    <tr>
+      <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th>
+      <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th>
+      <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th>
+      <th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th>
+      <th>Risk</th><th>Opp</th><th>Incl. R&O</th>
+    </tr>
+  </thead>`;
+  
+  let tbody = '<tbody>';
+  data.forEach(row => {
+    let rowClass = '';
+    if (row.type === 'subtotal') rowClass = 'row-subtotal';
+    else if (row.type === 'major') rowClass = 'row-major';
+    else if (row.type === 'grand') rowClass = 'row-grand';
+    else if (row.type === 'indent') rowClass = 'row-indent';
+    
+    tbody += `<tr class="${rowClass}">
+      <td>${row.label}</td>
+      <td class="num">${fmtNumDetailed(row.fy25.q1)}</td>
+      <td class="num">${fmtNumDetailed(row.fy25.q2)}</td>
+      <td class="num">${fmtNumDetailed(row.fy25.q3)}</td>
+      <td class="num">${fmtNumDetailed(row.fy25.q4)}</td>
+      <td class="num">${fmtNumDetailed(row.fy25.total)}</td>
+      <td class="num">${fmtNumDetailed(row.budget.q1)}</td>
+      <td class="num">${fmtNumDetailed(row.budget.q2)}</td>
+      <td class="num">${fmtNumDetailed(row.budget.q3)}</td>
+      <td class="num">${fmtNumDetailed(row.budget.q4)}</td>
+      <td class="num">${fmtNumDetailed(row.budget.total)}</td>
+      <td class="num">${fmtNumDetailed(row.janPV.q1)}</td>
+      <td class="num">${fmtNumDetailed(row.janPV.q2)}</td>
+      <td class="num">${fmtNumDetailed(row.janPV.q3)}</td>
+      <td class="num">${fmtNumDetailed(row.janPV.q4)}</td>
+      <td class="num">${fmtNumDetailed(row.janPV.total)}</td>
+      <td class="num">${fmtNumDetailed(row.febPV.q1)}</td>
+      <td class="num">${fmtNumDetailed(row.febPV.q2)}</td>
+      <td class="num">${fmtNumDetailed(row.febPV.q3)}</td>
+      <td class="num">${fmtNumDetailed(row.febPV.q4)}</td>
+      <td class="num">${fmtNumDetailed(row.febPV.total)}</td>
+      <td class="num ${row.risk > 0 ? 'neg' : ''}">${row.risk ? fmtNumDetailed(row.risk) : '—'}</td>
+      <td class="num ${row.opp > 0 ? 'pos' : ''}">${row.opp ? fmtNumDetailed(row.opp) : '—'}</td>
+      <td class="num">${row.inclRO ? fmtNumDetailed(row.inclRO) : '—'}</td>
+    </tr>`;
+  });
+  tbody += '</tbody>';
+  
+  document.getElementById('summaryTable').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GL ANALYZER
+// ═══════════════════════════════════════════════════════════════════════════
+
+function renderGLTable() {
+  const period = document.getElementById('glPeriod').value;
+  const acctType = document.getElementById('glAcctType').value;
+  const search = document.getElementById('glSearch').value.toLowerCase();
+  
+  let filtered = DATA.glData.filter(row => {
+    if (period !== 'all' && row.period !== period) return false;
+    
+    if (acctType !== 'all') {
+      const code = row.l5Code;
+      if (acctType === 'revenue' && (code < 300000 || code >= 400000)) return false;
+      if (acctType === 'cos' && (code < 400000 || code >= 500000)) return false;
+      if (acctType === 'expense' && (code < 500000 || code >= 900000)) return false;
+    }
+    
+    if (search) {
+      const matchCode = String(row.l5Code).includes(search);
+      const matchDesc = row.l5Desc.toLowerCase().includes(search);
+      if (!matchCode && !matchDesc) return false;
+    }
+    
+    return true;
+  });
+  
+  // Sort by absolute amount descending
+  filtered.sort((a, b) => Math.abs(b.amount) - Math.abs(a.amount));
+  
+  // Limit to top 100
+  const display = filtered.slice(0, 100);
+  
+  document.getElementById('glCount').textContent = `${filtered.length.toLocaleString()} accounts · Showing top ${display.length} by amount`;
+  
+  let thead = `<thead><tr>
+    <th>Period</th>
+    <th>L5 Code</th>
+    <th>Account Description</th>
+    <th>Transactions</th>
+    <th>Net Amount (JPY)</th>
+  </tr></thead>`;
+  
+  let tbody = '<tbody>';
+  display.forEach(row => {
+    const amtClass = row.amount < 0 ? 'neg' : (row.amount > 0 ? 'pos' : '');
+    tbody += `<tr>
+      <td>${row.period}</td>
+      <td class="num">${row.l5Code}</td>
+      <td>${row.l5Desc}</td>
+      <td class="num">${row.count.toLocaleString()}</td>
+      <td class="num ${amtClass}">¥${row.amount.toLocaleString()}</td>
+    </tr>`;
+  });
+  tbody += '</tbody>';
+  
+  document.getElementById('glTable').innerHTML = thead + tbody;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// DRILL DOWN
+// ═══════════════════════════════════════════════════════════════════════════
+
+function drillDown(key) {
+  const pages = {
+    physical: 'page-physical',
+    digital: 'page-digital',
+    newBusiness: 'page-newbiz',
+    licensing: 'page-licensing'
+  };
+  
+  const page = pages[key];
+  if (page) {
+    showPage(key === 'newBusiness' ? 'newbiz' : key);
+    renderDrillContent(key);
+  }
+}
+
+function renderDrillContent(channel) {
+  const containerId = channel === 'newBusiness' ? 'newbizContent' : `${channel}Content`;
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  
+  const feb = DATA.febPV.fullYear;
+  const bud = DATA.budget.fullYear;
+  const summaryRow = DATA.summaryReal.find(r => 
+    r.label === (channel === 'newBusiness' ? 'New Business' : channel.charAt(0).toUpperCase() + channel.slice(1))
+  );
+  
+  const html = `
+    <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr);">
+      <div class="kpi-card">
+        <div class="kpi-label">Feb PV</div>
+        <div class="kpi-value">${fmtNum(feb[channel])}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Budget</div>
+        <div class="kpi-value">${fmtNum(bud[channel])}</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">vs Budget</div>
+        <div class="kpi-value ${feb[channel] > bud[channel] ? 'pos' : 'neg'}">${fmtPct(calcVar(feb[channel], bud[channel]))}</div>
+      </div>
+      <div class="kpi-card highlight">
+        <div class="kpi-label">Incl. R&O</div>
+        <div class="kpi-value">${summaryRow ? fmtNumM(summaryRow.inclRO) : '—'}</div>
+      </div>
+    </div>
+    
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Risk & Opportunity Summary</div>
+      </div>
+      <div style="padding: 20px;">
+        ${summaryRow ? `
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div style="padding: 16px; background: var(--red-bg); border-radius: 8px; border-left: 4px solid var(--red);">
+              <div style="font-size: 11px; font-weight: 600; color: var(--red); margin-bottom: 8px;">RISKS</div>
+              <div style="font-size: 20px; font-family: 'JetBrains Mono', monospace;">${fmtNumM(summaryRow.risk)}</div>
+            </div>
+            <div style="padding: 16px; background: var(--green-bg); border-radius: 8px; border-left: 4px solid var(--green);">
+              <div style="font-size: 11px; font-weight: 600; color: var(--green); margin-bottom: 8px;">OPPORTUNITIES</div>
+              <div style="font-size: 20px; font-family: 'JetBrains Mono', monospace;">${fmtNumM(summaryRow.opp)}</div>
+            </div>
+          </div>
+        ` : '<p>No R&O data available</p>'}
+      </div>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════════════════════
+
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  
+  document.getElementById('page-' + pageId).classList.add('active');
+  
+  const navMap = { dashboard: 0, monthly: 1, summary: 2, gl: 3, physical: 4, digital: 5, newbiz: 6, licensing: 7 };
+  document.querySelectorAll('.nav-item')[navMap[pageId]]?.classList.add('active');
+  
+  // Render page-specific content
+  if (pageId === 'monthly') renderMonthlyTable();
+  if (pageId === 'summary') renderSummaryTable();
+  if (pageId === 'gl') renderGLTable();
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXPORT & UPLOAD
+// ═══════════════════════════════════════════════════════════════════════════
+
+function exportData() {
+  const feb = DATA.febPV.fullYear;
+  let csv = 'Account,Feb PV (M),Budget (M),FY25 (M)\n';
+  
+  PL_STRUCTURE.filter(r => r.key).forEach(row => {
+    const febVal = (feb[row.key] || 0) / 1000;
+    const budVal = (DATA.budget.fullYear[row.key] || 0) / 1000;
+    const fy25Val = (DATA.fy25.fullYear[row.key] || 0) / 1000;
+    csv += `"${row.label}",${febVal.toFixed(0)},${budVal.toFixed(0)},${fy25Val.toFixed(0)}\n`;
+  });
+  
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'FY26_PL_Export.csv';
+  a.click();
+}
+
+function handleUpload(files) {
+  alert('Upload functionality: Files selected: ' + Array.from(files).map(f => f.name).join(', ') + '\n\nIn production, this would parse the Excel files and update the dashboard data.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════════════
+
+document.addEventListener('DOMContentLoaded', () => {
+  renderKPIs();
+  renderPLTable();
+  renderGLTable();
+});
+</script>
+</body>
+</html>
