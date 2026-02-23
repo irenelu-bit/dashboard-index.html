@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FY26 Financial Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --nav-bg: #0d1117; --nav-border: rgba(255,255,255,0.06); --nav-text: rgba(255,255,255,0.5);
+  --nav-active: #f0c674; --nav-active-bg: rgba(240,198,116,0.08); --nav-active-border: rgba(240,198,116,0.15);
+  --gold: #d4a853; --gold-light: #f0c674; --gold-dim: rgba(212,168,83,0.08); --gold-border: rgba(212,168,83,0.2);
+  --bg: #fafaf8; --surface: #ffffff; --surface2: #f5f5f2; --border: #e8e6e1;
+  --text: #1a1816; --text-mid: #5a5550; --text-dim: #9a948c;
+  --green: #1e7a4d; --green-bg: rgba(30,122,77,0.08); --red: #b83232; --red-bg: rgba(184,50,50,0.06);
+  --blue: #2563eb; --blue-bg: rgba(37,99,235,0.06); --purple: #7c3aed; --purple-bg: rgba(124,58,237,0.06);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: 'Instrument Sans', sans-serif; font-size: 13px; }
+.sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 200px; background: var(--nav-bg); display: flex; flex-direction: column; z-index: 200; }
+.nav-section { padding: 14px 10px; flex: 1; overflow-y: auto; }
+.nav-label { font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(255,255,255,0.2); padding: 0 10px; margin: 16px 0 6px; }
+.nav-label:first-child { margin-top: 6px; }
+.nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--nav-text); transition: all 0.15s; margin-bottom: 2px; border: 1px solid transparent; }
+.nav-item:hover { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.75); }
+.nav-item.active { background: var(--nav-active-bg); color: var(--nav-active); border-color: var(--nav-active-border); }
+.nav-icon { font-size: 14px; width: 18px; text-align: center; }
+.sidebar-footer { padding: 14px 18px; border-top: 1px solid var(--nav-border); font-size: 10px; color: rgba(255,255,255,0.2); }
+.main { margin-left: 200px; display: flex; flex-direction: column; min-height: 100vh; }
+.topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; display: flex; align-items: center; gap: 16px; height: 56px; flex-wrap: wrap; }
+.topbar-title { font-size: 15px; font-weight: 600; }
+.topbar-sub { font-size: 11px; color: var(--text-dim); }
+.sep { width: 1px; height: 20px; background: var(--border); }
+.tabs { display: flex; gap: 3px; }
+.tab { padding: 6px 14px; border-radius: 6px; font-size: 12px; font-weight: 500; cursor: pointer; border: 1px solid transparent; background: transparent; color: var(--text-mid); transition: all 0.15s; font-family: inherit; }
+.tab.active { background: var(--nav-bg); color: var(--gold-light); }
+.tab:hover:not(.active) { background: var(--surface2); }
+.month-dropdown { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; border: 1px solid var(--border); background: var(--surface); color: var(--text); cursor: pointer; font-family: inherit; }
+.page { display: none; flex: 1; overflow: auto; padding: 24px; }
+.page.active { display: block; }
+.dash-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+.dash-title { font-size: 22px; font-weight: 600; }
+.dash-subtitle { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.btn { padding: 10px 18px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: var(--text-mid); cursor: pointer; font-size: 12px; font-weight: 500; font-family: inherit; }
+.btn:hover { border-color: var(--gold); }
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px; cursor: pointer; }
+.kpi-card:hover { border-color: var(--gold); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+.kpi-card.highlight { border-color: var(--gold); background: var(--gold-dim); }
+.kpi-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); margin-bottom: 8px; }
+.kpi-value { font-family: 'JetBrains Mono', monospace; font-size: 20px; }
+.kpi-delta { font-size: 10px; margin-top: 8px; display: flex; gap: 10px; flex-wrap: wrap; }
+.kpi-delta span { display: inline-flex; align-items: center; gap: 3px; padding: 2px 6px; border-radius: 4px; font-weight: 500; }
+.delta-yoy { background: var(--blue-bg); color: var(--blue); }
+.delta-fc { background: var(--gold-dim); color: #8a6d2f; }
+.delta-bud { background: var(--purple-bg); color: var(--purple); }
+.pos { color: var(--green) !important; }
+.neg { color: var(--red) !important; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.card-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface2); }
+.card-title { font-size: 14px; font-weight: 600; }
+.card-subtitle { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+.legend { display: flex; gap: 16px; font-size: 10px; color: var(--text-dim); }
+.legend span { display: flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; border-radius: 2px; }
+.pl-table-wrap { overflow-x: auto; max-height: 70vh; }
+.pl-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pl-table th { background: var(--surface2); padding: 10px 8px; text-align: right; font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); border-bottom: 1px solid var(--border); white-space: nowrap; position: sticky; top: 0; z-index: 10; }
+.pl-table th:first-child { text-align: left; min-width: 160px; position: sticky; left: 0; background: var(--surface2); z-index: 11; }
+.pl-table td { padding: 7px 8px; border-bottom: 1px solid rgba(0,0,0,0.04); text-align: right; color: var(--text-mid); white-space: nowrap; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+.pl-table td:first-child { text-align: left; color: var(--text); position: sticky; left: 0; background: var(--surface); z-index: 5; font-family: 'Instrument Sans', sans-serif; }
+.pl-table tr:hover td { background: var(--bg); }
+.pl-table tr:hover td:first-child { background: var(--bg); }
+.row-section td { background: var(--surface2) !important; font-weight: 600; font-size: 10px; text-transform: uppercase; color: var(--text-dim) !important; padding: 12px 8px 6px !important; border-bottom: none !important; }
+.row-subtotal td { font-weight: 600; border-top: 1px solid var(--border); background: rgba(0,0,0,0.015) !important; }
+.row-major td { font-weight: 600; background: var(--gold-dim) !important; border-top: 2px solid var(--gold-border); }
+.row-grand td { font-weight: 700; background: var(--nav-bg) !important; color: var(--gold-light) !important; }
+.row-indent td:first-child { padding-left: 20px; }
+.row-clickable { cursor: pointer; }
+.row-clickable:hover td { background: var(--blue-bg) !important; }
+.collapse-toggle { cursor: pointer; }
+.collapse-toggle::before { content: '▼'; display: inline-block; width: 12px; font-size: 8px; color: var(--text-dim); }
+.collapse-toggle.collapsed::before { transform: rotate(-90deg); }
+.row-collapsed { display: none; }
+.delta { font-size: 9px; padding: 2px 5px; border-radius: 3px; font-weight: 500; display: inline-block; min-width: 42px; text-align: center; }
+.gl-filters { display: flex; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-label { font-size: 10px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); }
+.filter-select { padding: 8px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; font-family: inherit; min-width: 150px; }
+.drill-kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+.drill-section { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+.drill-box { padding: 20px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); }
+.drill-box.risk { border-left: 4px solid var(--red); background: var(--red-bg); }
+.drill-box.opp { border-left: 4px solid var(--green); background: var(--green-bg); }
+.drill-box-title { font-size: 11px; font-weight: 600; text-transform: uppercase; margin-bottom: 12px; }
+.drill-box.risk .drill-box-title { color: var(--red); }
+.drill-box.opp .drill-box-title { color: var(--green); }
+.drill-box-value { font-family: 'JetBrains Mono', monospace; font-size: 24px; }
+@media (max-width: 1200px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<nav class="sidebar">
+  <div class="nav-section">
+    <div class="nav-label">Views</div>
+    <div class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">📊</span><span>Dashboard</span></div>
+    <div class="nav-item" onclick="showPage('monthly')"><span class="nav-icon">📅</span><span>Monthly View</span></div>
+    <div class="nav-item" onclick="showPage('summary')"><span class="nav-icon">📋</span><span>Summary Real</span></div>
+    <div class="nav-item" onclick="showPage('gl')"><span class="nav-icon">🔍</span><span>GL Analyzer</span></div>
+    <div class="nav-label">Drill-down</div>
+    <div class="nav-item" onclick="showPage('physical')"><span class="nav-icon">💿</span><span>Physical</span></div>
+    <div class="nav-item" onclick="showPage('digital')"><span class="nav-icon">🎵</span><span>Digital</span></div>
+    <div class="nav-item" onclick="showPage('newbiz')"><span class="nav-icon">🎤</span><span>New Business</span></div>
+    <div class="nav-item" onclick="showPage('licensing')"><span class="nav-icon">📜</span><span>Licensing</span></div>
+  </div>
+  <div class="sidebar-footer">FY26 Feb PV</div>
+</nav>
+<main class="main">
+  <header class="topbar">
+    <div><div class="topbar-title">Japan Warner Music</div><div class="topbar-sub">FY26 P&L · JPY M</div></div>
+    <div class="sep"></div>
+    <div class="tabs" id="viewTabs">
+      <button class="tab active" data-view="full" onclick="setView('full')">Full Year</button>
+      <button class="tab" data-view="ytd" onclick="setView('ytd')">YTD Act</button>
+      <button class="tab" data-view="q3" onclick="setView('q3')">Q3</button>
+      <button class="tab" data-view="q4" onclick="setView('q4')">Q4</button>
+    </div>
+    <div class="sep"></div>
+    <select class="month-dropdown" id="monthSelect" onchange="setMonth(this.value)">
+      <option value="all">All Months</option>
+      <option value="0">Oct</option><option value="1">Nov</option><option value="2">Dec</option><option value="3">Jan</option>
+      <option value="4">Feb</option><option value="5">Mar</option><option value="6">Apr</option><option value="7">May</option>
+      <option value="8">Jun</option><option value="9">Jul</option><option value="10">Aug</option><option value="11">Sep</option>
+    </select>
+  </header>
+  <div class="page active" id="page-dashboard">
+    <div class="dash-header"><div><h1 class="dash-title" id="dashTitle">FY26 Feb PV vs. Comparatives</h1><p class="dash-subtitle" id="dashSubtitle">Full Year · Actuals (Oct-Jan) + Forecast (Feb-Sep)</p></div><button class="btn" onclick="exportData()">↓ Export</button></div>
+    <div class="kpi-grid" id="kpiGrid"></div>
+    <div class="card"><div class="card-header"><div><div class="card-title">Profit & Loss Statement</div><div class="card-subtitle">Click revenue lines to drill down</div></div><div class="legend"><span><span class="legend-dot" style="background:var(--blue)"></span>YoY</span><span><span class="legend-dot" style="background:var(--gold)"></span>vs Jan PV</span><span><span class="legend-dot" style="background:var(--purple)"></span>vs Budget</span></div></div><div class="pl-table-wrap"><table class="pl-table" id="plTable"></table></div></div>
+  </div>
+  <div class="page" id="page-monthly"><div class="dash-header"><div><h1 class="dash-title">Monthly P&L View</h1><p class="dash-subtitle">FY26 Oct 2025 - Sep 2026</p></div></div><div class="card"><div class="card-header"><div class="card-title">Monthly Performance (JPY M)</div></div><div class="pl-table-wrap"><table class="pl-table" id="monthlyTable"></table></div></div></div>
+  <div class="page" id="page-summary"><div class="dash-header"><div><h1 class="dash-title">Summary Real</h1><p class="dash-subtitle">Quarterly P&L Comparison (JPY M)</p></div></div><div class="card"><div class="card-header"><div class="card-title">FY25 vs Budget vs Jan PV vs Feb PV</div></div><div class="pl-table-wrap"><table class="pl-table" id="summaryTable"></table></div></div></div>
+  <div class="page" id="page-gl"><div class="dash-header"><div><h1 class="dash-title">GL Analyzer</h1><p class="dash-subtitle">Oct-Jan Actuals</p></div></div><div class="gl-filters"><div class="filter-group"><label class="filter-label">Period</label><select class="filter-select" id="glPeriod" onchange="renderGLTable()"><option value="all">All</option><option value="Oct">Oct</option><option value="Nov">Nov</option><option value="Dec">Dec</option><option value="Jan">Jan</option></select></div><div class="filter-group"><label class="filter-label">Search</label><input type="text" class="filter-select" id="glSearch" placeholder="Account..." oninput="renderGLTable()"></div></div><div class="card"><div class="card-header"><div class="card-title">GL Transactions</div><div class="card-subtitle" id="glCount"></div></div><div class="pl-table-wrap" style="max-height:60vh"><table class="pl-table" id="glTable"></table></div></div></div>
+  <div class="page" id="page-physical"><div class="dash-header"><div><h1 class="dash-title">Physical Revenue</h1><p class="dash-subtitle">CD, Vinyl, Packaged Media</p></div><button class="btn" onclick="showPage('dashboard')">← Back</button></div><div id="physicalContent"></div></div>
+  <div class="page" id="page-digital"><div class="dash-header"><div><h1 class="dash-title">Digital Revenue</h1><p class="dash-subtitle">Streaming & Downloads</p></div><button class="btn" onclick="showPage('dashboard')">← Back</button></div><div id="digitalContent"></div></div>
+  <div class="page" id="page-newbiz"><div class="dash-header"><div><h1 class="dash-title">New Business</h1><p class="dash-subtitle">Tour, Merch, Artist Mgmt</p></div><button class="btn" onclick="showPage('dashboard')">← Back</button></div><div id="newbizContent"></div></div>
+  <div class="page" id="page-licensing"><div class="dash-header"><div><h1 class="dash-title">Licensing Revenue</h1><p class="dash-subtitle">Sync, Broadcast, Brand</p></div><button class="btn" onclick="showPage('dashboard')">← Back</button></div><div id="licensingContent"></div></div>
+</main>
+<script>
+// DATA - Feb PV monthly (in thousands), Jan PV has DIFFERENT Q2-Q4 forecast
+const DATA = {
+  months: ['Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'],
+  
+  // Feb PV - actual monthly forecast
+  febPV: {
+    monthly: {
+      totalRevenue: [2197064,2358539,2561983,1828233,2060463,2359347,7170792,4547952,4686872,4850001,3910793,6350921],
+      physical: [608673,381082,464524,471875,625724,360940,716662,1594130,1620140,1869817,787365,2700692],
+      digital: [1125923,1485829,990748,1111887,1112988,1162861,1193242,1247198,1407103,1413484,1426228,1426338],
+      digitalStreaming: [1073769,1432379,948056,1070196,1057339,1104718,1133580,1188340,1340048,1346511,1358717,1358717],
+      newBusiness: [277648,161796,426711,82459,166372,113680,5086708,1445137,1369806,1332686,1477248,1579582],
+      tourRevenue: [188189,37550,7287,350,0,0,4358329,928500,842000,756000,882500,480219],
+      artistMgmt: [36,10186,150,2600,0,0,0,2500,3000,1500,2000,0],
+      merchandise: [11439,38850,349026,16280,87000,31545,425821,352137,362806,413186,430748,446006],
+      otherNewBiz: [77984,75210,70248,63229,79372,82135,302559,162000,162000,162000,162000,653357],
+      licensing: [184821,329832,679999,162012,155378,721866,174179,261487,289823,234015,219952,644309],
+      brandRevenue: [22952,71670,96941,23608,0,487850,29724,45000,55000,35000,25000,495255],
+      syncRevenue: [-76536,2330,3492,13005,7000,300,20599,8000,10000,12000,15000,57997],
+      broadcastFee: [146376,40474,364774,41367,40920,40920,40920,40920,40920,40920,40920,40923],
+      murRevenue: [43997,127016,58958,43447,43722,43722,43722,52567,65903,75095,68032,0],
+      otherLicensing: [48031,88342,155834,40586,63736,149074,39214,115000,118000,71000,71000,50134],
+      grossMargin: [1027834,1092014,1182459,746570,1066577,1128599,1350842,1477752,1567353,1648599,1329911,2332505],
+      variableMktg: [83903,103059,71448,131828,220049,159985,201824,260834,171425,242866,189406,190372],
+      arCosts: [128228,-19701,86054,209006,96885,181164,200936,250350,297368,426362,421145,385395],
+      overhead: [275796,323594,394008,277980,314075,365829,363730,318317,335402,319756,313802,361440],
+      oibda: [530586,681253,638262,158385,435568,421621,584351,648251,763157,659616,405558,1370487]
+    },
+    fullYear: {totalRevenue:44882960,physical:12201625,digital:15103828,digitalStreaming:14394369,newBusiness:13519833,tourRevenue:8472875,artistMgmt:21971,merchandise:2964834,otherNewBiz:2060153,licensing:4057675,brandRevenue:1387000,syncRevenue:73187,broadcastFee:920354,murRevenue:623196,otherLicensing:1053938,grossMargin:15951014,variableMktg:2027000,arCosts:2663191,overhead:3963728,oibda:7297095}
+  },
+  
+  // Jan PV - Q1 same as Feb PV (actuals), Q2-Q4 DIFFERENT forecast
+  janPV: {
+    monthly: {
+      // Q1 (Oct-Dec) = same actuals, Q2 (Jan-Mar) different, Q3 (Apr-Jun) different, Q4 (Jul-Sep) different
+      totalRevenue: [2197064,2358539,2561983,1857323,2646733,3285831,5890314,5850657,5903737,4108857,3231010,4991912],
+      physical: [608673,381082,464524,578862,928918,636186,1638850,1638850,1614468,1238617,1238617,1234977],
+      digital: [1125923,1485829,990748,991438,1111041,1230600,1323374,1289652,1321593,1441250,1350531,1441849],
+      digitalStreaming: [1073769,1432379,948056,958932,1055393,1173373,1263380,1229652,1261048,1375468,1283917,1337002],
+      newBusiness: [277648,161796,426711,91274,282321,670505,2759811,2759811,2799932,1262989,476096,1551088],
+      tourRevenue: [188189,37550,7287,0,0,0,2000000,2000000,2000000,600000,0,872849],
+      artistMgmt: [36,10186,150,0,0,0,0,0,0,3000,2000,6585],
+      merchandise: [11439,38850,349026,30200,180000,360545,460000,460000,500000,410000,224096,541128],
+      otherNewBiz: [77984,75210,70248,61074,102321,309960,299811,299811,299932,249989,249999,130526],
+      licensing: [184821,329832,679999,195749,324453,748540,168279,162344,167744,166001,165766,763998],
+      brandRevenue: [22952,71670,96941,55814,100000,356186,29724,29724,40000,30000,30000,524989],
+      syncRevenue: [-76536,2330,3492,1007,100000,200000,20000,15000,10000,30000,30000,57997],
+      broadcastFee: [146376,40474,364774,41368,40920,40920,40920,40920,40920,40920,40920,40922],
+      murRevenue: [43997,127016,58958,55280,45000,73000,50000,50000,50000,50000,50000,69945],
+      otherLicensing: [48031,88342,155834,42280,38533,78434,27635,26700,26824,15081,14846,70145],
+      grossMargin: [1027834,1092014,1182459,794148,1178577,1562339,1560000,1560000,1565685,1473990,1353188,1600780],
+      variableMktg: [83903,103059,71448,130000,127000,127000,175000,210000,150000,200000,160000,437829],
+      arCosts: [128228,-19701,86054,215000,175000,175000,220000,260000,300000,435000,425000,316372],
+      overhead: [275796,323594,394008,290000,320000,360000,370000,330000,350000,335000,320000,295331],
+      oibda: [530586,681253,638262,159148,556577,900339,795000,760000,765685,503990,448188,557849]
+    },
+    fullYear: {totalRevenue:44882960,physical:12201624,digital:15103828,digitalStreaming:14394369,newBusiness:13519833,tourRevenue:8708875,artistMgmt:21971,merchandise:2964834,otherNewBiz:2060153,licensing:4057675,brandRevenue:1387000,syncRevenue:73187,broadcastFee:920354,murRevenue:623196,otherLicensing:1053938,grossMargin:15951014,variableMktg:1974239,arCosts:2715953,overhead:3963728,oibda:7297095}
+  },
+  
+  budget: {
+    monthly: {
+      totalRevenue: [2449843,2899324,2000362,2724801,2899324,2896348,5236840,5022733,4561897,4761430,3878976,5388367],
+      physical: [501079,928918,73239,1123415,928918,518618,1513837,1223415,1160232,1331447,579878,1818408],
+      digital: [1150108,1250708,867709,1311101,1250708,1309101,1268455,1311101,1463456,1473189,1480076,1305401],
+      digitalStreaming: [1100000,1195000,828889,1253889,1195000,1250889,1213000,1253889,1398000,1407000,1413000,1236322],
+      newBusiness: [497806,410822,787286,1579140,410822,759752,2185420,1579140,1648386,1666971,1529200,964088],
+      tourRevenue: [300000,150000,550000,1000000,150000,400000,1500000,1000000,1100000,1150000,1000000,672875],
+      artistMgmt: [3000,5000,3971,5000,5000,5000,5000,5000,6000,5000,5000,-30000],
+      merchandise: [100000,120000,120000,300000,120000,200000,400000,300000,320000,340000,350000,294834],
+      otherNewBiz: [94806,135822,113315,274140,135822,154752,280420,274140,222386,171971,174200,26379],
+      licensing: [300850,308876,272128,303577,308876,308877,272128,303577,289823,289823,289822,309470],
+      brandRevenue: [80000,100000,80000,100000,100000,80000,90000,100000,100000,100000,100000,257000],
+      syncRevenue: [30000,30000,10000,30000,30000,30000,30000,30000,30000,30000,30000,-236813],
+      broadcastFee: [100000,80000,80000,80000,80000,100000,80000,80000,80000,80000,80000,20354],
+      murRevenue: [50000,55000,55000,55000,55000,55000,50000,55000,55000,55000,55000,28196],
+      otherLicensing: [40850,43876,47128,38577,43876,43877,22128,38577,24823,24823,24822,240933],
+      grossMargin: [1063171,1303662,980879,1410640,1303662,1366640,1509880,1410640,1591523,1672054,1351073,1897961],
+      variableMktg: [127375,141334,146770,162614,141334,146614,226771,162614,171425,242866,189406,115116],
+      arCosts: [162509,146824,177919,293393,146824,263393,302393,293393,297368,426362,421145,584430],
+      overhead: [331787,327659,336227,338886,327659,338886,322922,338886,335402,319756,313802,331857],
+      oibda: [441500,687845,319963,615747,687845,617747,657794,615747,787328,683070,426720,666558]
+    },
+    fullYear: {totalRevenue:44720245,physical:12201624,digital:14941113,digitalStreaming:14243889,newBusiness:14019833,tourRevenue:8972875,artistMgmt:21971,merchandise:2964834,otherNewBiz:2060153,licensing:3557675,brandRevenue:1187000,syncRevenue:73187,broadcastFee:920354,murRevenue:623196,otherLicensing:753938,grossMargin:15861785,variableMktg:1974239,arCosts:2715953,overhead:3963728,oibda:7207866}
+  },
+  
+  fy25: {fullYear:{totalRevenue:40413631,physical:9228542,digital:13602313,digitalStreaming:12970125,newBusiness:14106646,tourRevenue:9250000,artistMgmt:18500,merchandise:2538146,otherNewBiz:2300000,licensing:3476130,brandRevenue:950000,syncRevenue:125000,broadcastFee:892000,murRevenue:609130,otherLicensing:900000,grossMargin:13675226,variableMktg:1539839,arCosts:1560173,overhead:4243827,oibda:6132099}},
+  
+  // Summary Real - quarterly data in millions (already rounded)
+  summaryReal: [
+    {label:"Total Revenue",type:"subtotal",fy25:{q1:10058,q2:8646,q3:7496,q4:14214,total:40414},budget:{q1:7350,q2:8698,q3:15720,q4:12952,total:44720},janPV:{q1:7118,q2:7790,q3:17645,q4:12331,total:44883},febPV:{q1:7118,q2:6248,q3:16406,q4:15112,total:44883},risk:15142,opp:4675,inclRO:34415},
+    {label:"Physical",type:"normal",fy25:{q1:2967,q2:1671,q3:2253,q4:2337,total:9229},budget:{q1:1503,q2:2787,q3:4542,q4:3370,total:12202},janPV:{q1:1454,q2:2144,q3:4892,q4:3712,total:12202},febPV:{q1:1454,q2:1459,q3:3931,q4:5358,total:12202},risk:6250,opp:2607,inclRO:8558},
+    {label:"Digital",type:"normal",fy25:{q1:3212,q2:3484,q3:3436,q4:3471,total:13602},budget:{q1:3450,q2:3752,q3:3805,q4:3933,total:14941},janPV:{q1:3603,q2:3333,q3:3935,q4:4233,total:15104},febPV:{q1:3603,q2:3388,q3:3848,q4:4266,total:15104},risk:1200,opp:0,inclRO:13904},
+    {label:"New Business",type:"normal",fy25:{q1:2948,q2:2552,q3:938,q4:7669,total:14107},budget:{q1:1493,q2:1232,q3:6557,q4:4737,total:14020},janPV:{q1:866,q2:1044,q3:8127,q4:3482,total:13520},febPV:{q1:866,q2:363,q3:7902,q4:4390,total:13520},risk:7356,opp:1758,inclRO:7922},
+    {label:"Licensing",type:"normal",fy25:{q1:931,q2:939,q3:870,q4:736,total:3476},budget:{q1:903,q2:927,q3:817,q4:912,total:3558},janPV:{q1:1195,q2:1269,q3:690,q4:904,total:4058},febPV:{q1:1195,q2:1039,q3:725,q4:1098,total:4058},risk:336,opp:310,inclRO:4032},
+    {label:"Gross Margin",type:"major",fy25:{q1:3281,q2:3341,q3:3240,q4:3813,total:13675},budget:{q1:3190,q2:3911,q3:4530,q4:4232,total:15862},janPV:{q1:3302,q2:3535,q3:4686,q4:4427,total:15951},febPV:{q1:3302,q2:2942,q3:4396,q4:5311,total:15951},risk:3131,opp:1025,inclRO:13845},
+    {label:"OIBDA",type:"grand",fy25:{q1:1519,q2:1315,q3:1504,q4:1794,total:6132},budget:{q1:1315,q2:2062,q3:1973,q4:1857,total:7208},janPV:{q1:1850,q2:1512,q3:2145,q4:1791,total:7297},febPV:{q1:1850,q2:1016,q3:1996,q4:2436,total:7297},risk:3291,opp:1025,inclRO:5031}
+  ],
+  
+  glData: [
+    {period:"Oct",l5Code:103050,l5Desc:"Checking Citibank",amount:-523426789,count:921},
+    {period:"Oct",l5Code:110995,l5Desc:"A/R Other-360 Business",amount:-7823456789,count:125},
+    {period:"Oct",l5Code:110005,l5Desc:"A/R-Trade",amount:42156789,count:102},
+    {period:"Oct",l5Code:320004,l5Desc:"MUR Revenue",amount:43997176,count:18},
+    {period:"Nov",l5Code:103050,l5Desc:"Checking Citibank",amount:-498723456,count:878},
+    {period:"Nov",l5Code:110995,l5Desc:"A/R Other-360",amount:-6923456123,count:118},
+    {period:"Nov",l5Code:320004,l5Desc:"MUR Revenue",amount:127016120,count:22},
+    {period:"Dec",l5Code:103050,l5Desc:"Checking Citibank",amount:-527854291,count:852},
+    {period:"Dec",l5Code:110995,l5Desc:"A/R Other-360",amount:-9260228702,count:115},
+    {period:"Dec",l5Code:394003,l5Desc:"Merchandise Revenue",amount:349025719,count:42},
+    {period:"Jan",l5Code:103050,l5Desc:"Checking Citibank",amount:-512345678,count:865},
+    {period:"Jan",l5Code:110995,l5Desc:"A/R Other-360",amount:-5678234567,count:108}
+  ]
+};
+
+let currentView = 'full', currentMonth = 'all';
+const collapsed = {newBusiness:false,licensing:false};
+
+const PL_STRUCTURE = [
+  {type:'section',label:'REVENUE'},
+  {key:'physical',label:'Physical',clickable:true},
+  {key:'digital',label:'Digital',clickable:true},
+  {key:'digitalStreaming',label:'  Streaming',indent:1},
+  {key:'newBusiness',label:'New Business',collapsible:true,clickable:true},
+  {key:'tourRevenue',label:'  Tour',indent:1,parent:'newBusiness'},
+  {key:'artistMgmt',label:'  Artist Mgmt',indent:1,parent:'newBusiness'},
+  {key:'merchandise',label:'  Merchandise',indent:1,parent:'newBusiness'},
+  {key:'otherNewBiz',label:'  Other',indent:1,parent:'newBusiness'},
+  {key:'licensing',label:'Licensing',collapsible:true,clickable:true},
+  {key:'brandRevenue',label:'  Brand',indent:1,parent:'licensing'},
+  {key:'syncRevenue',label:'  Sync',indent:1,parent:'licensing'},
+  {key:'broadcastFee',label:'  Broadcast',indent:1,parent:'licensing'},
+  {key:'murRevenue',label:'  MUR',indent:1,parent:'licensing'},
+  {key:'otherLicensing',label:'  Other',indent:1,parent:'licensing'},
+  {type:'subtotal',key:'totalRevenue',label:'Total Revenue'},
+  {type:'section',label:'COSTS & MARGIN'},
+  {key:'variableMktg',label:'Variable Marketing',cost:true},
+  {key:'arCosts',label:'A&R Costs',cost:true},
+  {key:'overhead',label:'Overhead',cost:true},
+  {type:'major',key:'grossMargin',label:'Gross Margin'},
+  {type:'grand',key:'oibda',label:'OIBDA'}
+];
+
+// Formatting - all numbers as 0,000M
+function fmtNum(n) {
+  if (n===null||n===undefined||isNaN(n)) return '—';
+  const m = n/1000;
+  const f = Math.abs(m).toLocaleString('en-US',{maximumFractionDigits:0});
+  return m<0 ? `(${f}M)` : `${f}M`;
+}
+function fmtNumM(n) {
+  if (n===null||n===undefined||isNaN(n)) return '—';
+  const f = Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
+  return n<0 ? `(${f}M)` : `${f}M`;
+}
+function fmtPct(n) {
+  if (n===null||n===undefined||isNaN(n)||!isFinite(n)) return '—';
+  const p = (n*100).toFixed(1)+'%';
+  return n>0 ? '+'+p : p;
+}
+function calcVar(a,b) { return (!b||b===0) ? null : (a-b)/Math.abs(b); }
+
+function getValue(scenario, key) {
+  const d = scenario==='febpv' ? DATA.febPV : scenario==='janpv' ? DATA.janPV : scenario==='budget' ? DATA.budget : DATA.fy25;
+  if (scenario==='fy25') return d.fullYear[key]||0;
+  
+  if (currentMonth!=='all') {
+    const idx = parseInt(currentMonth);
+    return (d.monthly&&d.monthly[key]) ? d.monthly[key][idx] : (d.fullYear[key]||0)/12;
+  }
+  if (currentView==='full') return d.fullYear[key]||0;
+  if (d.monthly&&d.monthly[key]) {
+    if (currentView==='ytd') return d.monthly[key].slice(0,4).reduce((a,b)=>a+b,0);
+    if (currentView==='q3') return d.monthly[key].slice(0,3).reduce((a,b)=>a+b,0);
+    if (currentView==='q4') return d.monthly[key].slice(3,6).reduce((a,b)=>a+b,0);
+  }
+  return d.fullYear[key]||0;
+}
+
+function setView(v) {
+  currentView=v; currentMonth='all';
+  document.getElementById('monthSelect').value='all';
+  document.querySelectorAll('#viewTabs .tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  const subs = {full:'Full Year · Actuals + Forecast',ytd:'YTD Actuals (Oct-Jan)',q3:'Q3 (Oct-Dec)',q4:'Q4 (Jan-Mar)'};
+  document.getElementById('dashSubtitle').textContent = subs[v];
+  renderAll();
+}
+function setMonth(m) {
+  currentMonth=m;
+  if (m!=='all') document.querySelectorAll('#viewTabs .tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('dashSubtitle').textContent = m==='all' ? 'Full Year' : DATA.months[parseInt(m)]+' 2025/26';
+  renderAll();
+}
+
+function renderAll() { renderKPIs(); renderPLTable(); }
+
+function renderKPIs() {
+  const rev=getValue('febpv','totalRevenue'), gm=getValue('febpv','grossMargin'), oibda=getValue('febpv','oibda');
+  const kpis = [
+    {label:'Total Revenue',value:rev,yoy:calcVar(rev,getValue('fy25','totalRevenue')),vsfc:calcVar(rev,getValue('janpv','totalRevenue')),vsbud:calcVar(rev,getValue('budget','totalRevenue'))},
+    {label:'Gross Margin',value:gm,yoy:calcVar(gm,getValue('fy25','grossMargin')),vsfc:calcVar(gm,getValue('janpv','grossMargin')),vsbud:calcVar(gm,getValue('budget','grossMargin'))},
+    {label:'OIBDA',value:oibda,yoy:calcVar(oibda,getValue('fy25','oibda')),vsfc:calcVar(oibda,getValue('janpv','oibda')),vsbud:calcVar(oibda,getValue('budget','oibda'))},
+    {label:'Adj OIBDA (R&O)',value:5031000,highlight:true,yoy:calcVar(5031000,DATA.fy25.fullYear.oibda),vsfc:calcVar(5031000,oibda),vsbud:calcVar(5031000,DATA.budget.fullYear.oibda)}
+  ];
+  document.getElementById('kpiGrid').innerHTML = kpis.map(k=>`
+    <div class="kpi-card ${k.highlight?'highlight':''}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value ${k.value<0?'neg':''}">${fmtNum(k.value)}</div>
+      <div class="kpi-delta">
+        <span class="delta-yoy ${k.yoy>0?'pos':k.yoy<0?'neg':''}">YoY ${fmtPct(k.yoy)}</span>
+        <span class="delta-fc ${k.vsfc>0?'pos':k.vsfc<0?'neg':''}">FC ${fmtPct(k.vsfc)}</span>
+        <span class="delta-bud ${k.vsbud>0?'pos':k.vsbud<0?'neg':''}">Bud ${fmtPct(k.vsbud)}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPLTable() {
+  let html = `<thead><tr><th>Account</th><th>Feb PV</th><th>Jan PV</th><th>vs Jan</th><th>Budget</th><th>vs Bud</th><th>FY25</th><th>YoY</th></tr></thead><tbody>`;
+  PL_STRUCTURE.forEach(r => {
+    if (r.type==='section') { html+=`<tr class="row-section"><td colspan="8">${r.label}</td></tr>`; return; }
+    const feb=getValue('febpv',r.key), jan=getValue('janpv',r.key), bud=getValue('budget',r.key), fy25=DATA.fy25.fullYear[r.key]||0;
+    const vsJan=calcVar(feb,jan), vsBud=calcVar(feb,bud), yoy=calcVar(feb,fy25);
+    let cls = r.type==='subtotal'?'row-subtotal':r.type==='major'?'row-major':r.type==='grand'?'row-grand':r.indent?'row-indent':'';
+    if (r.clickable) cls+=' row-clickable';
+    if (r.parent&&collapsed[r.parent]) cls+=' row-collapsed';
+    const colCls = r.collapsible?`collapse-toggle ${collapsed[r.key]?'collapsed':''}`:'';
+    const click = r.collapsible?`onclick="toggleCollapse('${r.key}')"`:r.clickable?`onclick="showDrillDown('${r.key}')"`:'';
+    const jc=r.cost?(feb<jan?'pos':feb>jan?'neg':''):(feb>jan?'pos':feb<jan?'neg':'');
+    const bc=r.cost?(feb<bud?'pos':feb>bud?'neg':''):(feb>bud?'pos':feb<bud?'neg':'');
+    const yc=r.cost?(feb<fy25?'pos':feb>fy25?'neg':''):(feb>fy25?'pos':feb<fy25?'neg':'');
+    html+=`<tr class="${cls}" data-parent="${r.parent||''}"><td><span class="${colCls}" ${click}>${r.label}</span></td><td>${fmtNum(feb)}</td><td>${fmtNum(jan)}</td><td><span class="delta ${jc}">${fmtPct(vsJan)}</span></td><td>${fmtNum(bud)}</td><td><span class="delta ${bc}">${fmtPct(vsBud)}</span></td><td>${fmtNum(fy25)}</td><td><span class="delta ${yc}">${fmtPct(yoy)}</span></td></tr>`;
+  });
+  html+='</tbody>';
+  document.getElementById('plTable').innerHTML = html;
+}
+
+function toggleCollapse(k) { collapsed[k]=!collapsed[k]; renderPLTable(); }
+
+function showDrillDown(ch) {
+  const map = {physical:'physical',digital:'digital',newBusiness:'newbiz',licensing:'licensing'};
+  showPage(map[ch]);
+}
+
+function renderDrillContent(channel) {
+  const cMap = {physical:'physicalContent',digital:'digitalContent',newBusiness:'newbizContent',licensing:'licensingContent'};
+  const c = document.getElementById(cMap[channel]);
+  if (!c) return;
+  
+  const labelMap = {physical:'Physical',digital:'Digital',newBusiness:'New Business',licensing:'Licensing'};
+  const sr = DATA.summaryReal.find(r=>r.label===labelMap[channel]);
+  const feb=getValue('febpv',channel), jan=getValue('janpv',channel), bud=getValue('budget',channel), fy25=DATA.fy25.fullYear[channel]||0;
+  
+  const subItems = {
+    physical: [],
+    digital: [{key:'digitalStreaming',label:'Streaming'}],
+    newBusiness: [{key:'tourRevenue',label:'Tour Revenue'},{key:'artistMgmt',label:'Artist Mgmt'},{key:'merchandise',label:'Merchandise'},{key:'otherNewBiz',label:'Other New Biz'}],
+    licensing: [{key:'brandRevenue',label:'Brand'},{key:'syncRevenue',label:'Sync'},{key:'broadcastFee',label:'Broadcast'},{key:'murRevenue',label:'MUR'},{key:'otherLicensing',label:'Other'}]
+  };
+  
+  // Monthly breakdown table
+  let monthlyHtml = `<div class="card"><div class="card-header"><div class="card-title">Monthly Breakdown - Feb PV (JPY M)</div></div><div class="pl-table-wrap"><table class="pl-table"><thead><tr><th>Line Item</th>`;
+  DATA.months.forEach(m => monthlyHtml+=`<th>${m}</th>`);
+  monthlyHtml += `<th>FY Total</th></tr></thead><tbody>`;
+  
+  // Main channel row
+  const mainM = DATA.febPV.monthly[channel]||[];
+  const mainT = mainM.reduce((a,b)=>a+b,0);
+  monthlyHtml += `<tr class="row-subtotal"><td>${labelMap[channel]}</td>`;
+  mainM.forEach(v => monthlyHtml+=`<td>${fmtNum(v)}</td>`);
+  monthlyHtml += `<td>${fmtNum(mainT)}</td></tr>`;
+  
+  // Sub-items
+  subItems[channel].forEach(item => {
+    const mon = DATA.febPV.monthly[item.key]||[];
+    const tot = mon.reduce((a,b)=>a+b,0);
+    monthlyHtml += `<tr class="row-indent"><td>${item.label}</td>`;
+    mon.forEach(v => monthlyHtml+=`<td>${fmtNum(v)}</td>`);
+    monthlyHtml += `<td>${fmtNum(tot)}</td></tr>`;
+  });
+  monthlyHtml += `</tbody></table></div></div>`;
+  
+  // Comparison table
+  let compHtml = `<div class="card"><div class="card-header"><div class="card-title">Scenario Comparison (JPY M)</div></div><div class="pl-table-wrap"><table class="pl-table"><thead><tr><th>Line Item</th><th>Feb PV</th><th>Jan PV</th><th>vs Jan</th><th>Budget</th><th>vs Bud</th><th>FY25</th><th>YoY</th></tr></thead><tbody>`;
+  
+  // Main row
+  compHtml += `<tr class="row-subtotal"><td>${labelMap[channel]}</td><td>${fmtNum(feb)}</td><td>${fmtNum(jan)}</td><td><span class="delta ${feb>jan?'pos':feb<jan?'neg':''}">${fmtPct(calcVar(feb,jan))}</span></td><td>${fmtNum(bud)}</td><td><span class="delta ${feb>bud?'pos':feb<bud?'neg':''}">${fmtPct(calcVar(feb,bud))}</span></td><td>${fmtNum(fy25)}</td><td><span class="delta ${feb>fy25?'pos':feb<fy25?'neg':''}">${fmtPct(calcVar(feb,fy25))}</span></td></tr>`;
+  
+  // Sub-items comparison
+  subItems[channel].forEach(item => {
+    const f=DATA.febPV.fullYear[item.key]||0, j=DATA.janPV.fullYear[item.key]||0, b=DATA.budget.fullYear[item.key]||0, y=DATA.fy25.fullYear[item.key]||0;
+    compHtml += `<tr class="row-indent"><td>${item.label}</td><td>${fmtNum(f)}</td><td>${fmtNum(j)}</td><td><span class="delta ${f>j?'pos':f<j?'neg':''}">${fmtPct(calcVar(f,j))}</span></td><td>${fmtNum(b)}</td><td><span class="delta ${f>b?'pos':f<b?'neg':''}">${fmtPct(calcVar(f,b))}</span></td><td>${fmtNum(y)}</td><td><span class="delta ${f>y?'pos':f<y?'neg':''}">${fmtPct(calcVar(f,y))}</span></td></tr>`;
+  });
+  compHtml += `</tbody></table></div></div>`;
+  
+  c.innerHTML = `
+    <div class="drill-kpi-grid">
+      <div class="kpi-card"><div class="kpi-label">Feb PV</div><div class="kpi-value">${fmtNum(feb)}</div></div>
+      <div class="kpi-card"><div class="kpi-label">vs Jan PV</div><div class="kpi-value ${feb>jan?'pos':feb<jan?'neg':''}">${fmtPct(calcVar(feb,jan))}</div></div>
+      <div class="kpi-card"><div class="kpi-label">vs Budget</div><div class="kpi-value ${feb>bud?'pos':feb<bud?'neg':''}">${fmtPct(calcVar(feb,bud))}</div></div>
+      <div class="kpi-card highlight"><div class="kpi-label">YoY</div><div class="kpi-value ${feb>fy25?'pos':feb<fy25?'neg':''}">${fmtPct(calcVar(feb,fy25))}</div></div>
+    </div>
+    <div class="drill-section">
+      <div class="drill-box risk"><div class="drill-box-title">Risks</div><div class="drill-box-value neg">${sr?fmtNumM(sr.risk):'—'}</div></div>
+      <div class="drill-box opp"><div class="drill-box-title">Opportunities</div><div class="drill-box-value pos">${sr?fmtNumM(sr.opp):'—'}</div></div>
+    </div>
+    ${compHtml}
+    ${monthlyHtml}
+  `;
+}
+
+function renderMonthlyTable() {
+  const m = DATA.febPV.monthly;
+  let html = `<thead><tr><th>Account</th>${DATA.months.map(mo=>`<th>${mo}</th>`).join('')}<th>FY</th></tr></thead><tbody>`;
+  [{key:'totalRevenue',label:'Total Revenue',type:'subtotal'},{key:'physical',label:'Physical'},{key:'digital',label:'Digital'},{key:'newBusiness',label:'New Business'},{key:'licensing',label:'Licensing'},{key:'grossMargin',label:'Gross Margin',type:'major'},{key:'oibda',label:'OIBDA',type:'grand'}].forEach(r => {
+    const cls = r.type==='subtotal'?'row-subtotal':r.type==='major'?'row-major':r.type==='grand'?'row-grand':'';
+    const vals = m[r.key]||[];
+    const total = vals.reduce((a,b)=>a+b,0);
+    html += `<tr class="${cls}"><td>${r.label}</td>${vals.map(v=>`<td>${fmtNum(v)}</td>`).join('')}<td>${fmtNum(total)}</td></tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('monthlyTable').innerHTML = html;
+}
+
+function renderSummaryTable() {
+  const d = DATA.summaryReal;
+  let html = `<thead><tr><th rowspan="2">Account</th><th colspan="5">FY25</th><th colspan="5">Budget</th><th colspan="5">Jan PV</th><th colspan="5">Feb PV</th><th colspan="3">R&O</th></tr><tr><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FY</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FY</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FY</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>FY</th><th>Risk</th><th>Opp</th><th>Adj</th></tr></thead><tbody>`;
+  d.forEach(r => {
+    const cls = r.type==='subtotal'?'row-subtotal':r.type==='major'?'row-major':r.type==='grand'?'row-grand':'';
+    html += `<tr class="${cls}"><td>${r.label}</td>
+      <td>${fmtNumM(r.fy25.q1)}</td><td>${fmtNumM(r.fy25.q2)}</td><td>${fmtNumM(r.fy25.q3)}</td><td>${fmtNumM(r.fy25.q4)}</td><td>${fmtNumM(r.fy25.total)}</td>
+      <td>${fmtNumM(r.budget.q1)}</td><td>${fmtNumM(r.budget.q2)}</td><td>${fmtNumM(r.budget.q3)}</td><td>${fmtNumM(r.budget.q4)}</td><td>${fmtNumM(r.budget.total)}</td>
+      <td>${fmtNumM(r.janPV.q1)}</td><td>${fmtNumM(r.janPV.q2)}</td><td>${fmtNumM(r.janPV.q3)}</td><td>${fmtNumM(r.janPV.q4)}</td><td>${fmtNumM(r.janPV.total)}</td>
+      <td>${fmtNumM(r.febPV.q1)}</td><td>${fmtNumM(r.febPV.q2)}</td><td>${fmtNumM(r.febPV.q3)}</td><td>${fmtNumM(r.febPV.q4)}</td><td>${fmtNumM(r.febPV.total)}</td>
+      <td class="${r.risk>0?'neg':''}">${r.risk?fmtNumM(r.risk):'—'}</td><td class="${r.opp>0?'pos':''}">${r.opp?fmtNumM(r.opp):'—'}</td><td>${r.inclRO?fmtNumM(r.inclRO):'—'}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  document.getElementById('summaryTable').innerHTML = html;
+}
+
+function renderGLTable() {
+  const period = document.getElementById('glPeriod').value;
+  const search = document.getElementById('glSearch').value.toLowerCase();
+  let filtered = DATA.glData.filter(r => (period==='all'||r.period===period) && (!search||r.l5Desc.toLowerCase().includes(search)||String(r.l5Code).includes(search)));
+  filtered.sort((a,b) => Math.abs(b.amount)-Math.abs(a.amount));
+  document.getElementById('glCount').textContent = `${filtered.length} accounts`;
+  let html = `<thead><tr><th>Period</th><th>Code</th><th>Description</th><th>Count</th><th>Amount</th></tr></thead><tbody>`;
+  filtered.forEach(r => html += `<tr><td>${r.period}</td><td>${r.l5Code}</td><td>${r.l5Desc}</td><td>${r.count}</td><td class="${r.amount<0?'neg':'pos'}">¥${r.amount.toLocaleString()}</td></tr>`);
+  html += '</tbody>';
+  document.getElementById('glTable').innerHTML = html;
+}
+
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(pg => pg.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  const map = {dashboard:0,monthly:1,summary:2,gl:3,physical:4,digital:5,newbiz:6,licensing:7};
+  document.querySelectorAll('.nav-item')[map[p]]?.classList.add('active');
+  if (p==='monthly') renderMonthlyTable();
+  if (p==='summary') renderSummaryTable();
+  if (p==='gl') renderGLTable();
+  if (p==='physical') renderDrillContent('physical');
+  if (p==='digital') renderDrillContent('digital');
+  if (p==='newbiz') renderDrillContent('newBusiness');
+  if (p==='licensing') renderDrillContent('licensing');
+}
+
+function exportData() {
+  let csv = 'Account,Feb PV,Jan PV,Budget,FY25\n';
+  PL_STRUCTURE.filter(r=>r.key).forEach(r => csv += `"${r.label}",${getValue('febpv',r.key)/1000},${getValue('janpv',r.key)/1000},${getValue('budget',r.key)/1000},${(DATA.fy25.fullYear[r.key]||0)/1000}\n`);
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download = 'FY26_PL.csv'; a.click();
+}
+
+document.addEventListener('DOMContentLoaded', () => { renderAll(); });
+</script>
+</body>
+</html>
